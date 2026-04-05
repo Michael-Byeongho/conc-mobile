@@ -192,7 +192,7 @@ st.markdown(f"""
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {border_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 현재 제안(${data['tc_b']:.2f}) 분석</p>
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 현재 제안 분석</p>
         <p style="margin: 0; color: #34495e; font-size: 14px; line-height: 1.5;">
             {"❌ 목표보다 <b><span style='color:"+status_color+"'>$"+str(round(abs(diff_tc),2))+"</span></b> 부족합니다." if not is_favorable else
              "✅ 목표보다 <b><span style='color:"+status_color+"'>$"+str(round(abs(diff_tc),2))+"</span></b> 더 받아냈습니다."}
