@@ -43,7 +43,7 @@ res_area = st.container()
 
 # --- 3. 공통 변수 (접어두기) ---
 with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=False): # 모바일에서는 기본적으로 접어둠
-c1, c2 = st.columns(2) # 모바일은 3컬럼보다 2컬럼이 한계선입니다.
+    c1, c2 = st.columns(2) # 모바일은 3컬럼보다 2컬럼이 한계선입니다.
 with c1:
 cu_p = st.number_input("Cu Price ($/MT)", value=12000.0)
 ag_p = st.number_input("Ag Price ($/Oz)", value=70.0)
