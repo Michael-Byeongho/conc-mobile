@@ -1,156 +1,112 @@
 import streamlit as st
 st.markdown("<div id='link_to_top' name='link_to_top'></div>", unsafe_allow_html=True)
+
 # --- 0. Config & Style ---
-st.set_page_config(page_title="Trade-off & Sensitivity Tool", layout="centered")
+st.set_page_config(page_title="Copper Conc. Trade-off Tool", layout="centered")
 
 st.markdown("""
     <style>
         html, body, [data-testid="stAppViewContainer"] { background-color: white !important; color: #2c3e50 !important; }
         .stMarkdown, p, label { color: #2c3e50 !important; }
-        .section-head { background-color: #2e4053; color: white !important; padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; font-weight: bold; }
+        .section-head { background-color: #2e4053; color: white !important; padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; font-weight: bold; font-size: 14px; }
+        .metric-card { background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center; flex:1; }
     </style>
 """, unsafe_allow_html=True)
 
-def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
-                  au_p, au_a, au_py, au_rc, au_dt, au_dv, 
-                  ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv):
-    
+# --- 1. 계산 함수 (구조 단순화) ---
+def calculate_net_value(mode, tc, market, terms):
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # --- 1. 금속별 Net 가치 (광석 자체의 가치 산출) ---
-    # Cu
-    if cu_dt == "PD":
-        cu_payable_ratio = (cu_a * (cu_py / 100.0) - cu_dv) / 100.0
+    # 1. Cu 가치
+    if terms['cu_dt'] == "PD":
+        cu_payable_unit = (market['cu_a'] * (terms['cu_py'] / 100.0)) - terms['cu_dv']
     else:
-        cu_payable_ratio = (cu_a * (cu_py - cu_dv) / 100.0) / 100.0
-    v_cu = (cu_payable_ratio * cu_p) - (max(0.0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
-    
-    # Ag
-    if ag_dt == "PD":
-        ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
-    else:
-        ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
-    v_ag = max(0.0, ag_payable_content) * g_to_oz * (ag_p - ag_rc)
-    
-    # Au
-    if au_dt == "PD":
-        au_payable_content = (au_a * (au_py / 100.0)) - au_dv
-    else:
-        au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
-    v_au = max(0.0, au_payable_content) * g_to_oz * (au_p - au_rc)
-    
-    # --- 2. 최종 정산 단가 결정 ---
-    # 광석 가치에서 제련소 비용(TC)을 뺀 것이 '정산 단가'
-    net_value = (v_cu + v_ag + v_au) - tc
+        cu_payable_unit = market['cu_a'] * (terms['cu_py'] - terms['cu_dv']) / 100.0
+    v_cu = (max(0.0, cu_payable_unit) / 100.0) * (market['cu_p'] - (terms['cu_rc'] / 100.0 * lb_to_mt))
 
-    if "Purchase" in mode:
-        return -net_value  # 비용 관점 (낮을수록 좋음 -> 마이너스 금액이 작아짐)
+    # 2. Ag 가치
+    if terms['ag_dt'] == "PD":
+        ag_payable_oz = (market['ag_a'] * (terms['ag_py'] / 100.0) - terms['ag_dv']) * g_to_oz
     else:
-        return net_value   # 수익 관점 (높을수록 좋음)
-                      
-st.info("""
-    **📢 공지사항 (Notice)**
-    * 본 계산기는 **DMT(Dry Metric Ton) 1톤**기준으로 함 """)                      
+        ag_payable_oz = market['ag_a'] * (terms['ag_py'] - terms['ag_dv']) / 100.0 * g_to_oz
+    v_ag = max(0.0, ag_payable_oz) * (market['ag_p'] - terms['ag_rc'])
 
-# --- 2. 상단 레이아웃 ---
-st.title("⚡ 동정광 Trade off 분석")
-mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
+    # 3. Au 가치
+    if terms['au_dt'] == "PD":
+        au_payable_oz = (market['au_a'] * (terms['au_py'] / 100.0) - terms['au_dv']) * g_to_oz
+    else:
+        au_payable_oz = market['au_a'] * (terms['au_py'] - terms['au_dv']) / 100.0 * g_to_oz
+    v_au = max(0.0, au_payable_oz) * (market['au_p'] - terms['au_rc'])
+    net_value = v_cu + v_au + v_ag - tc
+    return -net_value if "Purchase" in mode else net_value
 
-# 최상단 결과 요약 공간 확보
+# --- 2. UI 레이아웃 ---
+st.title("⚡ 동정광 Trade-off 분석기")
+mode = st.radio("🔄 거래 포지션 선택", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
 res_placeholder = st.empty()
 
-# --- 3. 입력 섹션 (공통 및 탭) ---
+# --- 3. 공통 입력 ---
 with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
-    c1, c2 = st.columns(2)
-    with c1:
-        cu_p = st.number_input("Cu Price ($/MT)", value=12000.0)
-        ag_p = st.number_input("Ag Price ($/Oz)", value=70.0)
-        au_p = st.number_input("Au Price ($/Oz)", value=4500.0)
-    with c2:
-        cu_a = st.number_input("Cu Assay (%)", value=25.0)
-        ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
-        au_a = st.number_input("Au Assay (g/DMT)", value=5.0)
+    c1, c2, c3 = st.columns(3)
+    market = {
+        "cu_p": c1.number_input("Cu Price ($/MT)", value=9500.0),
+        "cu_a": c1.number_input("Cu Assay (%)", value=25.0),
+        "au_p": c2.number_input("Au Price ($/Oz)", value=2300.0),
+        "au_a": c2.number_input("Au Assay (g/DMT)", value=2.0),
+        "ag_p": c3.number_input("Ag Price ($/Oz)", value=28.0),
+        "ag_a": c3.number_input("Ag Assay (g/DMT)", value=50.0)
+    }
 
-tabs = st.tabs(["A안(Base)", "B안", "C안"])
-cases = [("A (Base)안", "a", 30.0), ("B안", "b", 30.0), ("C안", "c", 30.0)]
-data = {}
+# --- 4. 시나리오별 입력 ---
+tabs = st.tabs(["A안 (Base)", "B안", "C안"])
+res = {} # 결과 저장 딕셔너리 명칭을 res로 통일
 
-for i, (name, k, def_tc) in enumerate(cases):
+for i, name in enumerate(["a", "b", "c"]):
     with tabs[i]:
-        st.markdown(f"<div class='section-head'>{name} - Metals Terms</div>", unsafe_allow_html=True)
-        # Cu
-        c_cu1, c_cu2, c_cu3 = st.columns(3)
-        data[f"cu_py_{k}"] = c_cu1.number_input("Cu Pay (%)", value=100.0, key=f"cp_{k}")
-        data[f"cu_dt_{k}"] = c_cu2.radio("Cu Deduct", ["PD", "MD"], horizontal=True, key=f"cdt_{k}")
-        data[f"cu_dv_{k}"] = c_cu3.number_input("Cu PD/MD Val", value=1.25, key=f"cdv_{k}")
-        # Ag
-        st.divider()
-        c_ag1, c_ag2, c_ag3 = st.columns(3)
-        data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=90.0, key=f"ap_{k}")
-        data[f"ag_dt_{k}"] = c_ag2.radio("Ag Deduct", ["PD", "MD"], horizontal=True, key=f"adt_{k}")
-        data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=50.0, key=f"adv_{k}")
-        # Au
-        st.divider()
-        c_au1, c_au2, c_au3 = st.columns(3)
-        data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=90.0, key=f"aup_{k}")
-        data[f"au_dt_{k}"] = c_au2.radio("Au Deduct", ["PD", "MD"], horizontal=True, key=f"audt_{k}")
-        data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.25, key=f"audv_{k}")
-        # TC/RC
-        st.markdown(f"<div class='section-head'>📉 TC/RC</div>", unsafe_allow_html=True)
-        c_tr1, c_tr2 = st.columns(2)
-        data[f"tc_{k}"] = c_tr1.number_input("TC ($/DMT)", value=def_tc, key=f"tc_{k}")
-        data[f"cu_rc_{k}"] = c_tr1.number_input("Cu RC (c/lb)", value=8.0, key=f"curc_{k}")
-        data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.4, key=f"agrc_{k}")
-        data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=5.0, key=f"aurc_{k}")
+        st.markdown(f"<div class='section-head'>{name.upper()}안 조건 설정</div>", unsafe_allow_html=True)
+        col_tc, col_cu, col_au, col_ag = st.columns(4)
+        
+        with col_tc:
+            tc = st.number_input(f"TC ($/DMT)", value=80.0, key=f"tc_{name}")
+            cu_rc = st.number_input(f"Cu RC (c/lb)", value=8.0, key=f"curc_{name}")
+            au_rc = st.number_input(f"Au RC ($/oz)", value=5.0, key=f"aurc_{name}")
+            ag_rc = st.number_input(f"Ag RC ($/oz)", value=0.5, key=f"agrc_{name}")
+        
+        with col_cu:
+            st.caption("Copper")
+            cu_py = st.number_input("Pay (%)", value=96.5, key=f"cupy_{name}")
+            cu_dt = st.radio("Deduct", ["PD", "MD"], key=f"cudt_{name}")
+            cu_dv = st.number_input("Val", value=1.0, key=f"cudv_{name}")
 
-# --- 4. Calculation 수정 ---
-res = {}
-for _, k, _ in cases:
-    res[k] = calc_unit_net(
-        mode=mode, 
-        tc=data[f"tc_{k}"],
-        # Cu 관련
-        cu_p=cu_p, cu_a=cu_a, cu_py=data[f"cu_py_{k}"], 
-        cu_rc=data[f"cu_rc_{k}"], cu_dt=data[f"cu_dt_{k}"], cu_dv=data[f"cu_dv_{k}"],
-        # Au 관련 (함수 정의 순서에 맞춤)
-        au_p=au_p, au_a=au_a, au_py=data[f"au_py_{k}"], 
-        au_rc=data[f"au_rc_{k}"], au_dt=data[f"au_dt_{k}"], au_dv=data[f"au_dv_{k}"],
-        # Ag 관련
-        ag_p=ag_p, ag_a=ag_a, ag_py=data[f"ag_py_{k}"], 
-        ag_rc=data[f"ag_rc_{k}"], ag_dt=data[f"ag_dt_{k}"], ag_dv=data[f"ag_dv_{k}"]
-    )
-# --- 5. 결과 출력 (Sidebar & Placeholder) ---
-with st.sidebar:
-    st.markdown("---")
-    st.subheader("📊 최종 계산 결과")
-    st.metric("A (비교기준값)", f"${abs(res['a']):,.2f} /t")
-    st.metric("B안 (vs A)", f"${abs(res['b']):,.2f} /t", f"{res['b'] - res['a']:,.2f}")
-    st.metric("C안 (vs A)", f"${abs(res['c']):,.2f} /t", f"{res['c'] - res['a']:,.2f}")
+        with col_au:
+            st.caption("Gold")
+            au_py = st.number_input("Pay (%)", value=90.0, key=f"aupy_{name}")
+            au_dt = st.radio("Deduct", ["PD", "MD"], index=1, key=f"audt_{name}")
+            au_dv = st.number_input("Val", value=1.0, key=f"audv_{name}")
 
+        with col_ag:
+            st.caption("Silver")
+            ag_py = st.number_input("Pay (%)", value=90.0, key=f"agpy_{name}")
+            ag_dt = st.radio("Deduct", ["PD", "MD"], index=1, key=f"agdt_{name}")
+            ag_dv = st.number_input("Val", value=30.0, key=f"agdv_{name}")
+
+        res[name] = calculate_net_value(mode, tc, market, {
+            "cu_py": cu_py, "cu_dt": cu_dt, "cu_dv": cu_dv, "cu_rc": cu_rc,
+            "au_py": au_py, "au_dt": au_dt, "au_dv": au_dv, "au_rc": au_rc,
+            "ag_py": ag_py, "ag_dt": ag_dt, "ag_dv": ag_dv, "ag_rc": ag_rc
+        })
+
+# --- 5. 결과 분석 ---
 d_b = res['b'] - res['a']
 d_c = res['c'] - res['a']
 
 with res_placeholder:
     st.markdown(f"""
-        <div style="margin-top: 10px; margin-bottom: 20px;">
-            <p style="font-weight: bold; margin-bottom: 5px;">📊 분석 결과 요약</p>
-            <div style="display: flex; justify-content: space-between; gap: 10px;">
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">A안 (Base)</div>
-                    <div style="font-size:20px; font-weight:bold;">${abs(res['a']):,.2f}</div>
-                </div>
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">B안</div>
-                    <div style="font-size:20px; font-weight:bold;">${abs(res['b']):,.2f}</div>
-                    <div style="font-size:14px; font-weight:bold; color:{'green' if d_b > 0 else 'red'}">{'▲' if d_b > 0 else '▼'} {abs(d_b):,.2f}</div>
-                </div>
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">C안</div>
-                    <div style="font-size:20px; font-weight:bold;">${abs(res['c']):,.2f}</div>
-                    <div style="font-size:14px; font-weight:bold; color:{'green' if d_c > 0 else 'red'}">{'▲' if d_c > 0 else '▼'} {abs(d_c):,.2f}</div>
-                </div>
-            </div>
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <div class="metric-card">A안 (Base)<br><b>${abs(res['a']):,.2f}</b></div>
+            <div class="metric-card">B안<br><b>${abs(res['b']):,.2f}</b><br><span style="color:{'#27ae60' if d_b > 0 else '#e74c3c'}">{'▲' if d_b > 0 else '▼'} {abs(d_b):,.2f}</span></div>
+            <div class="metric-card">C안<br><b>${abs(res['c']):,.2f}</b><br><span style="color:{'#27ae60' if d_c > 0 else '#e74c3c'}">{'▲' if d_c > 0 else '▼'} {abs(d_c):,.2f}</span></div>
         </div>
     """, unsafe_allow_html=True)
 
