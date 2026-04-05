@@ -104,15 +104,22 @@ for i, (name, k, def_tc) in enumerate(cases):
         data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.4, key=f"agrc_{k}")
         data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=5.0, key=f"aurc_{k}")
 
-# --- 4. Calculation (모든 입력 후 계산 수행) ---
+# --- 4. Calculation 수정 ---
 res = {}
 for _, k, _ in cases:
     res[k] = calc_unit_net(
-        mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
-        au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"],
-        ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]
+        mode=mode, 
+        tc=data[f"tc_{k}"],
+        # Cu 관련
+        cu_p=cu_p, cu_a=cu_a, cu_py=data[f"cu_py_{k}"], 
+        cu_rc=data[f"cu_rc_{k}"], cu_dt=data[f"cu_dt_{k}"], cu_dv=data[f"cu_dv_{k}"],
+        # Au 관련 (함수 정의 순서에 맞춤)
+        au_p=au_p, au_a=au_a, au_py=data[f"au_py_{k}"], 
+        au_rc=data[f"au_rc_{k}"], au_dt=data[f"au_dt_{k}"], au_dv=data[f"au_dv_{k}"],
+        # Ag 관련
+        ag_p=ag_p, ag_a=ag_a, ag_py=data[f"ag_py_{k}"], 
+        ag_rc=data[f"ag_rc_{k}"], ag_dt=data[f"ag_dt_{k}"], ag_dv=data[f"ag_dv_{k}"]
     )
-
 # --- 5. 결과 출력 (Sidebar & Placeholder) ---
 with st.sidebar:
     st.markdown("---")
