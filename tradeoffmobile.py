@@ -102,10 +102,6 @@ with res_area:
         else:
             # 변동 없을 때: 회색
             return f"<span style='color: #7f8c8d !important; background-color: #f2f4f4 !important; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: clamp(10px, 3vw, 12px); display: inline-block;'>- 0.00</span>"
-
-    d_b = res['b'] - res['a']
-    d_c = res['c'] - res['a']
-
     st.markdown(f"""
         <style>
             .flex-container {{
