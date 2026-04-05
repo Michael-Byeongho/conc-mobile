@@ -44,8 +44,8 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     return -net if mode == "Purchase (매입)" else net
 
 
-# --- 최상단 앵커 설정 ---
-st.anchor("top")
+# --- 0. 최상단 앵커 (HTML 방식) ---
+st.markdown('<div id="top"></div>', unsafe_allow_html=True)
 # --- 2. 상단 제목 및 포지션 설정 ---
 st.title("⚡ 동정광 Trade off 분석")
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
@@ -162,10 +162,9 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- 7. 상단 이동 버튼 ---
+# --- 7. 하단 이동 버튼 ---
 st.markdown("""
     <style>
-        /* 링크가 버튼처럼 보이게 스타일링 */
         .top-link {
             display: block;
             width: 100%;
@@ -178,12 +177,8 @@ st.markdown("""
             text-align: center;
             margin-top: 30px;
             text-decoration: none;
-            transition: background-color 0.3s;
         }
-        .top-link:hover {
-            background-color: #3e5871;
-            text-decoration: none;
-        }
+        .top-link:hover { background-color: #3e5871; }
     </style>
     <a href="#top" class="top-link">
         ⬆️ 최상단으로 돌아가기
