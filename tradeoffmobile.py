@@ -1,34 +1,33 @@
-
 import streamlit as st
+
 st.markdown("<div id='link_to_top' name='link_to_top'></div>", unsafe_allow_html=True)
 
-# --- 0. Config ---
+# --- 0. 설정 ---
 st.set_page_config(page_title="Trade-off Tool", layout="centered")
 
-# --- 1. Core Logic (인자 순서 명확화) ---
-def calc_unit_net(mode, tc, 
-                  cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
-                  ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv,  # 은(Ag)을 먼저 배치
-                  au_p, au_a, au_py, au_rc, au_dt, au_dv): # 금(Au)을 나중에 배치
+# --- 1. 계산 로직 (순서와 부호 완벽 정리) ---
+def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
+                  ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv, 
+                  au_p, au_a, au_py, au_rc, au_dt, au_dv):
     
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # 1. Cu 가치
+    # Cu 가치
     if cu_dt == "PD":
         cu_payable_ratio = (cu_a * (cu_py / 100.0) - cu_dv) / 100.0
     else:
         cu_payable_ratio = (cu_a * (cu_py - cu_dv) / 100.0) / 100.0
     v_cu = (cu_payable_ratio * cu_p) - (max(0.0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
     
-    # 2. Ag 가치 (이제 정확히 매칭됨)
+    # Ag 가치 (20g 차이 시 약 $44.75 발생)
     if ag_dt == "PD":
         ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else:
         ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
     v_ag = max(0.0, ag_payable_content) * g_to_oz * (ag_p - ag_rc)
     
-    # 3. Au 가치
+    # Au 가치
     if au_dt == "PD":
         au_payable_content = (au_a * (au_py / 100.0)) - au_dv
     else:
@@ -40,12 +39,8 @@ def calc_unit_net(mode, tc,
 
 # --- 2. 상단 레이아웃 ---
 st.title("⚡ 동정광 Trade off 분석")
-st.info("**📢 공지사항:** 본 계산기는 **DMT 1톤** 기준이며, 실질적인 RC 절감 효과를 반영합니다.")
-
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
-res_placeholder = st.empty()
 
-# --- 3. 입력 섹션 (Key값 전면 수정 및 통일) ---
 with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
     c1, c2 = st.columns(2)
     with c1:
@@ -57,65 +52,53 @@ with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
         ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
         au_a = st.number_input("Au Assay (g/DMT)", value=5.0)
 
+# --- 3. 입력 탭 (이름 통일) ---
 tabs = st.tabs(["A안(Base)", "B안", "C안"])
-cases = [("A (Base)안", "a", 30.0), ("B안", "b", 30.0), ("C안", "c", 30.0)]
-data = {}
+cases = ["a", "b", "c"]
+res = {}
 
-for i, (name, k, def_tc) in enumerate(cases):
+for i, k in enumerate(cases):
     with tabs[i]:
-        st.markdown(f"**{name} - Metals Terms**")
+        st.subheader(f"{k.upper()}안 조건 설정")
+        col1, col2, col3 = st.columns(3)
         # Cu
-        c_cu1, c_cu2, c_cu3 = st.columns(3)
-        data[f"cu_py_{k}"] = c_cu1.number_input("Cu Pay (%)", value=100.0, key=f"cu_py_{k}")
-        data[f"cu_dt_{k}"] = c_cu2.radio("Cu Deduct", ["PD", "MD"], horizontal=True, key=f"cu_dt_{k}")
-        data[f"cu_dv_{k}"] = c_cu3.number_input("Cu PD/MD Val", value=1.25, key=f"cu_dv_{k}")
-        
+        cupy = col1.number_input(f"Cu Pay (%)", value=100.0, key=f"cupy_{k}")
+        cudt = col2.radio(f"Cu Deduct", ["PD", "MD"], key=f"cudt_{k}")
+        cudv = col3.number_input(f"Cu Val", value=1.25, key=f"cudv_{k}")
         # Ag
         st.divider()
-        c_ag1, c_ag2, c_ag3 = st.columns(3)
-        data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=90.0, key=f"ag_py_{k}")
-        data[f"ag_dt_{k}"] = c_ag2.radio("Ag Deduct", ["PD", "MD"], horizontal=True, key=f"ag_dt_{k}")
-        data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=50.0, key=f"ag_dv_{k}")
-        
+        agpy = col1.number_input(f"Ag Pay (%)", value=90.0, key=f"agpy_{k}")
+        agdt = col2.radio(f"Ag Deduct", ["PD", "MD"], key=f"agdt_{k}")
+        agdv = col3.number_input(f"Ag Val", value=50.0, key=f"agdv_{k}")
         # Au
         st.divider()
-        c_au1, c_au2, c_au3 = st.columns(3)
-        data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=90.0, key=f"au_py_{k}")
-        data[f"au_dt_{k}"] = c_au2.radio("Au Deduct", ["PD", "MD"], horizontal=True, key=f"au_dt_{k}")
-        data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.25, key=f"au_dv_{k}")
-        
-        # TC/RC (Key 불일치 해결: 호출부와 동일하게 맞춤)
+        aupy = col1.number_input(f"Au Pay (%)", value=90.0, key=f"aupy_{k}")
+        audt = col2.radio(f"Au Deduct", ["PD", "MD"], key=f"audt_{k}")
+        audv = col3.number_input(f"Au Val", value=1.25, key=f"audv_{k}")
+        # TC/RC
         st.divider()
-        c_tr1, c_tr2 = st.columns(2)
-        data[f"tc_{k}"] = c_tr1.number_input("TC ($/DMT)", value=def_tc, key=f"tc_{k}")
-        data[f"cu_rc_{k}"] = c_tr1.number_input("Cu RC (c/lb)", value=8.0, key=f"cu_rc_{k}")
-        data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.4, key=f"ag_rc_{k}")
-        data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=5.0, key=f"au_rc_{k}")
+        tc = col1.number_input(f"TC ($/DMT)", value=30.0, key=f"tc_{k}")
+        curc = col2.number_input(f"Cu RC (c/lb)", value=8.0, key=f"curc_{k}")
+        agrc = col3.number_input(f"Ag RC ($/oz)", value=0.4, key=f"agrc_{k}")
+        aurc = col1.number_input(f"Au RC ($/oz)", value=5.0, key=f"aurc_{k}")
 
-# --- 4. Calculation (호출부 순서 재정렬) ---
-res = {}
-for _, k, _ in cases:
-    # 함수 정의 순서: Mode, TC, Cu데이터, Ag데이터, Au데이터 순서로 엄격히 맞춤
-    res[k] = calc_unit_net(
-        mode, 
-        data[f"tc_{k}"],
-        cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
-        ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"], # Ag 먼저
-        au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"]  # Au 나중에
-    )
+        # 매 탭마다 즉시 계산해서 저장
+        res[k] = calc_unit_net(mode, tc, cu_p, cu_a, cupy, curc, cudt, cudv, 
+                               ag_p, ag_a, agpy, agrc, agdt, agdv, 
+                               au_p, au_a, aupy, aurc, audt, audv)
 
-# --- 5. 결과 출력 (Sidebar) ---
+# --- 4. 결과 사이드바 ---
 with st.sidebar:
-    st.markdown("---")
-    st.subheader("📊 최종 계산 결과")
-    st.metric("A (비교기준값)", f"${abs(res['a']):,.2f} /t")
+    st.header("📊 분석 결과")
+    st.metric("A안 (Base)", f"${abs(res['a']):,.2f}")
     
-    d_b = res['b'] - res['a']
-    d_c = res['c'] - res['a']
-    is_purchase = "Purchase" in mode
-    
-    st.metric("B안 (vs A)", f"${abs(res['b']):,.2f} /t", f"{d_b:,.2f}", delta_color="inverse" if is_purchase else "normal")
-    st.metric("C안 (vs A)", f"${abs(res['c']):,.2f} /t", f"{d_c:,.2f}", delta_color="inverse" if is_purchase else "normal")
+    is_pur = "Purchase" in mode
+    for k in ["b", "c"]:
+        diff = res[k] - res['a']
+        st.metric(f"{k.upper()}안 (vs A)", f"${abs(res[k]):,.2f}", f"{diff:,.2f}", 
+                  delta_color="inverse" if is_pur else "normal")
+
+st.info("**💡 확인:** Ag Val을 50에서 70으로 바꿔보세요. 약 $44.75가 정확히 변해야 합니다.")
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
