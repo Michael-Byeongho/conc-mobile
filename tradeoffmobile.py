@@ -1,30 +1,17 @@
 import streamlit as st
-import pandas as pd
 
-# --- 0. Config & Style (모바일 최적화 및 스타일 유지) ---
+# --- 0. Config & Style ---
 st.set_page_config(page_title="Trade-off & Sensitivity Tool", layout="centered")
 
 st.markdown("""
     <style>
-        html, body, [data-testid="stAppViewContainer"] {
-            background-color: white !important;
-            color: #2c3e50 !important;
-        }
-        .stMarkdown, p, label {
-            color: #2c3e50 !important;
-        }
-        .section-head { 
-            background-color: #2e4053; 
-            color: white !important; 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
+        html, body, [data-testid="stAppViewContainer"] { background-color: white !important; color: #2c3e50 !important; }
+        .stMarkdown, p, label { color: #2c3e50 !important; }
+        .section-head { background-color: #2e4053; color: white !important; padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 1. Core Logic (PD/MD 분기 로직 반영) ---
+# --- 1. Core Logic (사용자 요청 반영: PD를 Pay% 적용 후에 차감) ---
 def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
                   au_p, au_a, au_py, au_rc, au_dt, au_dv, 
                   ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv):
@@ -32,42 +19,43 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # 1. Cu Payable Content 계산
-    # PD(Unit Deduct): (Assay - Deduct) * Pay%
-    # MD(Percentage Deduct): Assay * (1 - Deduct%) * Pay%
+    # 1. Cu Payable Metal (DMT당 %단위)
+    # 로직: (Assay * Pay%) - PD  혹은 Assay * (Pay% - MD%)
     if cu_dt == "PD":
-        cu_content = (cu_a - cu_dv) * (cu_py / 100.0)
-    else: # MD
-        cu_content = cu_a * (1 - cu_dv / 100.0) * (cu_py / 100.0)
-    v_cu_pay = (max(0, cu_content) / 100.0) * (cu_p - (cu_rc / 100.0 * lb_to_mt))
+        cu_payable_content = (cu_a * (cu_py / 100.0)) - cu_dv
+    else: # MD (비율 차감)
+        cu_payable_content = cu_a * (cu_py / 100.0 - cu_dv / 100.0)
     
-    # 2. Ag Payable Content 계산
+    v_cu_pay = (max(0, cu_payable_content) / 100.0) * (cu_p - (cu_rc / 100.0 * lb_to_mt))
+    
+    # 2. Ag Payable Metal (DMT당 g단위)
     if ag_dt == "PD":
-        ag_content = (ag_a - ag_dv) * (ag_py / 100.0)
+        ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else: # MD
-        ag_content = ag_a * (1 - ag_dv / 100.0) * (ag_py / 100.0)
-    v_ag_pay = (max(0, ag_content) * g_to_oz) * (ag_p - ag_rc)
+        ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
+        
+    v_ag_pay = (max(0, ag_payable_content) * g_to_oz) * (ag_p - ag_rc)
     
-    # 3. Au Payable Content 계산
+    # 3. Au Payable Metal (DMT당 g단위)
     if au_dt == "PD":
-        au_content = (au_a - au_dv) * (au_py / 100.0)
+        au_payable_content = (au_a * (au_py / 100.0)) - au_dv
     else: # MD
-        au_content = au_a * (1 - au_dv / 100.0) * (au_py / 100.0)
-    v_au_pay = (max(0, au_content) * g_to_oz) * (au_p - au_rc)
+        au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
+        
+    v_au_pay = (max(0, au_payable_content) * g_to_oz) * (au_p - au_rc)
     
     # Net 계산
     net = (v_cu_pay + v_ag_pay + v_au_pay) - tc
     return -net if mode == "Purchase (매입)" else net
 
-# --- 2. 최상단 대시보드 레이아웃 ---
-st.markdown("<div id='link_to_top'></div>", unsafe_allow_html=True)
+# --- 2. 최상단 대시보드 ---
 st.title("⚡ 동정광 Trade off 분석")
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
 
 res_area = st.container()
 
 # --- 3. 공통 변수 ---
-with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=False):
+with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
     c1, c2 = st.columns(2)
     with c1:
         cu_p = st.number_input("Cu Price ($/MT)", value=12000.0)
@@ -78,88 +66,71 @@ with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=False):
         ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
         au_a = st.number_input("Au Assay (g/DMT)", value=1.0)
 
-# --- 4. Main Inputs (A, B, C안 설정) ---
-st.markdown("### ⚖️ 조건 세부 설정")
+# --- 4. Main Inputs ---
 tabs = st.tabs(["A안(Base)", "B안", "C안"])
 cases = [("A (Base)안", "a", 80.0), ("B안", "b", 80.0), ("C안", "c", 80.0)]
 data = {}
 
 for i, (name, k, def_tc) in enumerate(cases):
     with tabs[i]:
-        # Cu Section
-        st.markdown(f"<div class='section-head'>{name} - Copper Terms</div>", unsafe_allow_html=True)
-        data[f"cu_py_{k}"] = st.number_input("Cu Pay (%)", value=100.0, key=f"cp_{k}")
-        c_sub1, c_sub2 = st.columns(2)
-        with c_sub1: data[f"cu_dt_{k}"] = st.radio("Cu deduct type", ["PD", "MD"], horizontal=True, key=f"cdt_{k}")
-        with c_sub2: data[f"cu_dv_{k}"] = st.number_input("Cu Deduct Val (unit or %)", value=1.0, key=f"cdv_{k}")
+        st.markdown(f"<div class='section-head'>{name} - Metals Terms</div>", unsafe_allow_html=True)
+        # Cu
+        c_cu1, c_cu2, c_cu3 = st.columns([1,1,1])
+        data[f"cu_py_{k}"] = c_cu1.number_input("Cu Pay (%)", value=100.0, key=f"cp_{k}")
+        data[f"cu_dt_{k}"] = c_cu2.radio("Cu Deduct", ["PD", "MD"], horizontal=True, key=f"cdt_{k}")
+        data[f"cu_dv_{k}"] = c_cu3.number_input("Cu PD/MD Val", value=1.0, key=f"cdv_{k}")
         
-        # Ag Section
+        # Ag
         st.divider()
-        st.markdown(f"**Silver (Ag) Terms**")
-        data[f"ag_py_{k}"] = st.number_input("Ag Pay (%)", value=90.0, key=f"ap_{k}")
-        c_sub3, c_sub4 = st.columns(2)
-        with c_sub3: data[f"ag_dt_{k}"] = st.radio("Ag deduct type", ["PD", "MD"], horizontal=True, key=f"adt_{k}")
-        with c_sub4: data[f"ag_dv_{k}"] = st.number_input("Ag Deduct Val (g or %)", value=30.0, key=f"adv_{k}")
+        c_ag1, c_ag2, c_ag3 = st.columns([1,1,1])
+        data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=100.0, key=f"ap_{k}")
+        data[f"ag_dt_{k}"] = c_ag2.radio("Ag Deduct", ["PD", "MD"], horizontal=True, key=f"adt_{k}")
+        data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=30.0, key=f"adv_{k}")
 
-        # Au Section
+        # Au
         st.divider()
-        st.markdown(f"**Gold (Au) Terms**")
-        data[f"au_py_{k}"] = st.number_input("Au Pay (%)", value=90.0, key=f"aup_{k}")
-        c_sub5, c_sub6 = st.columns(2)
-        with c_sub5: data[f"au_dt_{k}"] = st.radio("Au deduct type", ["PD", "MD"], horizontal=True, key=f"audt_{k}")
-        with c_sub6: data[f"au_dv_{k}"] = st.number_input("Au Deduct Val (g or %)", value=1.0, key=f"audv_{k}")
+        c_au1, c_au2, c_au3 = st.columns([1,1,1])
+        data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=100.0, key=f"aup_{k}")
+        data[f"au_dt_{k}"] = c_au2.radio("Au Deduct", ["PD", "MD"], horizontal=True, key=f"audt_{k}")
+        data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.0, key=f"audv_{k}")
         
-        # TC/RC Section
-        st.markdown(f"<div class='section-head'>📉 Deductions (TC/RC)</div>", unsafe_allow_html=True)
-        c_sub7, c_sub8 = st.columns(2)
-        with c_sub7: 
-            data[f"tc_{k}"] = st.number_input("TC ($/DMT)", value=def_tc, key=f"tc_{k}")
-            data[f"cu_rc_{k}"] = st.number_input("Cu RC (c/lb)", value=8.0, key=f"curc_{k}")
-        with c_sub8:
-            data[f"ag_rc_{k}"] = st.number_input("Ag RC ($/oz)", value=0.5, key=f"agrc_{k}")
-            data[f"au_rc_{k}"] = st.number_input("Au RC ($/oz)", value=5.0, key=f"aurc_{k}")
+        st.markdown(f"<div class='section-head'>📉 TC/RC</div>", unsafe_allow_html=True)
+        c_tr1, c_tr2 = st.columns(2)
+        data[f"tc_{k}"] = c_tr1.number_input("TC ($/DMT)", value=def_tc, key=f"tc_{k}")
+        data[f"cu_rc_{k}"] = c_tr1.number_input("Cu RC (c/lb)", value=0.0, key=f"curc_{k}")
+        data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.0, key=f"agrc_{k}")
+        data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=0.0, key=f"aurc_{k}")
 
-# --- 5. Calculation & Display ---
+# --- 5. Calculation & Result Card ---
 res = {k: calc_unit_net(mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
                         au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"],
                         ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]) for _, k, _ in cases}
 
 with res_area:
-    def get_delta_html(delta_val):
-        if delta_val > 0:
-            return f"<span style='color: #1e8449 !important; background-color: #e8f8f5 !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>↑ {delta_val:,.2f}</span>"
-        elif delta_val < 0:
-            return f"<span style='color: #c0392b !important; background-color: #fdedec !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>↓ {abs(delta_val):,.2f}</span>"
-        return f"<span style='color: #7f8c8d !important; background-color: #f2f4f4 !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>- 0.00</span>"
-
     d_b = res['b'] - res['a']
     d_c = res['c'] - res['a']
-
+    
     st.markdown(f"""
-        <style>
-            .flex-container {{ display: flex; justify-content: space-between; gap: 8px; width: 100%; margin-bottom: 20px; }}
-            .flex-card {{ flex: 1; background-color: #f8f9fa; padding: 10px 5px; border-radius: 8px; border-left: 4px solid #2e4053; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }}
-            .card-title {{ color: #7f8c8d; font-size: clamp(10px, 2.8vw, 14px); margin-bottom: 4px; }}
-            .card-value {{ color: #2c3e50; font-weight: 900; font-size: clamp(14px, 4.5vw, 22px); margin-bottom: 2px; }}
-        </style>
-        <div class="flex-container">
-            <div class="flex-card">
-                <div class="card-title">A안(원안)</div>
-                <div class="card-value">${abs(res['a']):,.1f}/t</div>
-                <div style='font-size: 11px; color: transparent;'>-</div>
+        <div style="display: flex; justify-content: space-between; gap: 10px;">
+            <div style="flex:1; background:#f8f9fa; padding:10px; border-radius:8px; border-left:5px solid #2e4053; text-align:center;">
+                <div style="font-size:12px; color:#7f8c8d;">A안 (Base)</div>
+                <div style="font-size:20px; font-weight:bold;">${abs(res['a']):,.2f}</div>
             </div>
-            <div class="flex-card">
-                <div class="card-title">B안</div>
-                <div class="card-value">${abs(res['b']):,.1f}/t</div>
-                {get_delta_html(d_b)}
+            <div style="flex:1; background:#f8f9fa; padding:10px; border-radius:8px; border-left:5px solid #2e4053; text-align:center;">
+                <div style="font-size:12px; color:#7f8c8d;">B안</div>
+                <div style="font-size:20px; font-weight:bold;">${abs(res['b']):,.2f}</div>
+                <div style="font-size:12px; color:{'green' if d_b > 0 else 'red'}">{'↑' if d_b > 0 else '↓'} {abs(d_b):,.2f}</div>
             </div>
-            <div class="flex-card">
-                <div class="card-title">C안</div>
-                <div class="card-value">${abs(res['c']):,.1f}/t</div>
-                {get_delta_html(d_c)}
+            <div style="flex:1; background:#f8f9fa; padding:10px; border-radius:8px; border-left:5px solid #2e4053; text-align:center;">
+                <div style="font-size:12px; color:#7f8c8d;">C안</div>
+                <div style="font-size:20px; font-weight:bold;">${abs(res['c']):,.2f}</div>
+                <div style="font-size:12px; color:{'green' if d_c > 0 else 'red'}">{'↑' if d_c > 0 else '↓'} {abs(d_c):,.2f}</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
+
+st.info("💡 **로직 확인**: 현재 PD는 'Assay * Pay%' 결과값에서 직접 차감됩니다. 따라서 은(Ag) Pay가 100%일 때 PD 20g의 가치는 정확히 시장가 20g($19.29)과 일치하게 됩니다.")
+
 
 # --- 6. 협상 타겟 계산 (Break-even TC) ---
 st.markdown("---")
