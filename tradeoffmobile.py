@@ -53,7 +53,7 @@ with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
         "cu_p": c1.number_input("Cu Price ($/MT)", value=12000.0),
         "cu_a": c1.number_input("Cu Assay (%)", value=25.0),
         "ag_p": c3.number_input("Ag Price ($/Oz)", value=70.0),
-        "ag_a": c3.number_input("Ag Assay (g/DMT)", value=350.0)
+        "ag_a": c3.number_input("Ag Assay (g/DMT)", value=350.0),
         "au_p": c2.number_input("Au Price ($/Oz)", value=4500.0),
         "au_a": c2.number_input("Au Assay (g/DMT)", value=5.0),
     }
