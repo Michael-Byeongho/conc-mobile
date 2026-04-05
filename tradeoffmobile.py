@@ -44,8 +44,8 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     return -net if mode == "Purchase (매입)" else net
 
 # --- 2. 상단 제목 및 포지션 설정 ---
-st.title("⚡ 동정광 Trade off 분석")
 st.anchor("top")
+st.title("⚡ 동정광 Trade off 분석")
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
 
 # 결과를 그릴 '빈 공간'을 미리 확보 (최상단 배치를 위해)
