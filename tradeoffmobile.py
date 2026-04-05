@@ -5,10 +5,11 @@ st.markdown("<div id='link_to_top' name='link_to_top'></div>", unsafe_allow_html
 # --- 0. Config ---
 st.set_page_config(page_title="Trade-off Tool", layout="centered")
 
-# --- 1. Core Logic (수정됨: 모든 금속 RC 절감 로직 적용) ---
-def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
-                  au_p, au_a, au_py, au_rc, au_dt, au_dv, 
-                  ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv):
+# --- 1. Core Logic (인자 순서 명확화) ---
+def calc_unit_net(mode, tc, 
+                  cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
+                  ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv,  # 은(Ag)을 먼저 배치
+                  au_p, au_a, au_py, au_rc, au_dt, au_dv): # 금(Au)을 나중에 배치
     
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
@@ -20,7 +21,7 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
         cu_payable_ratio = (cu_a * (cu_py - cu_dv) / 100.0) / 100.0
     v_cu = (cu_payable_ratio * cu_p) - (max(0.0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
     
-    # 2. Ag 가치 (PD 20g 변경 시 약 $44.75 차이 발생)
+    # 2. Ag 가치 (이제 정확히 매칭됨)
     if ag_dt == "PD":
         ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else:
@@ -35,11 +36,7 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     v_au = max(0.0, au_payable_content) * g_to_oz * (au_p - au_rc)
     
     net_value = (v_cu + v_ag + v_au) - tc
-
-    if "Purchase" in mode:
-        return -net_value
-    else:
-        return net_value
+    return -net_value if "Purchase" in mode else net_value
 
 # --- 2. 상단 레이아웃 ---
 st.title("⚡ 동정광 Trade off 분석")
@@ -95,13 +92,16 @@ for i, (name, k, def_tc) in enumerate(cases):
         data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.4, key=f"ag_rc_{k}")
         data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=5.0, key=f"au_rc_{k}")
 
-# --- 4. Calculation ---
+# --- 4. Calculation (호출부 순서 재정렬) ---
 res = {}
 for _, k, _ in cases:
+    # 함수 정의 순서: Mode, TC, Cu데이터, Ag데이터, Au데이터 순서로 엄격히 맞춤
     res[k] = calc_unit_net(
-        mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
-        au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"],
-        ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]
+        mode, 
+        data[f"tc_{k}"],
+        cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
+        ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"], # Ag 먼저
+        au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"]  # Au 나중에
     )
 
 # --- 5. 결과 출력 (Sidebar) ---
