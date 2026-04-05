@@ -43,8 +43,10 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     net = (v_cu_pay + v_ag_pay + v_au_pay) - tc
     return -net if mode == "Purchase (매입)" else net
 
-# --- 2. 상단 제목 및 포지션 설정 ---
+
+# --- 최상단 앵커 설정 ---
 st.anchor("top")
+# --- 2. 상단 제목 및 포지션 설정 ---
 st.title("⚡ 동정광 Trade off 분석")
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
 
@@ -160,27 +162,30 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- 7. 하단 이동 버튼 ---
+# --- 7. 상단 이동 버튼 ---
 st.markdown("""
     <style>
-        .top-button {
-            width: 100%; 
-            padding: 15px; 
-            background-color: #2e4053; 
-            color: white !important; 
-            border-radius: 10px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            text-align: center; 
-            margin-top: 30px;
+        /* 링크가 버튼처럼 보이게 스타일링 */
+        .top-link {
             display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #2e4053;
+            color: white !important;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 30px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .top-link:hover {
+            background-color: #3e5871;
             text-decoration: none;
         }
-        .top-button:hover {
-            background-color: #3e5871;
-        }
     </style>
-    <a href="#top" class="top-button">
+    <a href="#top" class="top-link">
         ⬆️ 최상단으로 돌아가기
     </a>
 """, unsafe_allow_html=True)
