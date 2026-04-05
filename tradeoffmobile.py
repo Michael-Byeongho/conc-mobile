@@ -110,6 +110,74 @@ for k in ['a', 'b', 'c']:
 d_b = res['b'] - res['a']
 d_c = res['c'] - res['a']
 
+# --- 6. 대시보드 출력 (색상 로직 강화) ---
+with res_area:
+    def get_delta_html(delta_val):
+        # 양수일 때 (초록색)
+        if delta_val > 0.01: 
+            color = "#1e8449" # 진한 초록
+            bg = "#e8f8f5"
+            symbol = "▲"
+        # 음수일 때 (빨간색)
+        elif delta_val < -0.01:
+            color = "#c0392b" # 진한 빨강
+            bg = "#fdedec"
+            symbol = "▼"
+        # 변동 없을 때 (회색)
+        else:
+            color = "#7f8c8d"
+            bg = "#f2f4f4"
+            symbol = "-"
+            
+        return f"""
+            <span style="
+                color: {color} !important; 
+                background-color: {bg} !important; 
+                padding: 2px 8px; 
+                border-radius: 4px; 
+                font-weight: bold; 
+                font-size: 13px; 
+                display: inline-block;
+                margin-top: 4px;
+            ">
+                {symbol} {abs(delta_val):,.2f}
+            </span>
+        """
+
+    st.markdown(f"""
+        <style>
+            .flex-container {{ display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-bottom: 20px; }}
+            .flex-card {{ 
+                flex: 1; 
+                background-color: #ffffff; 
+                padding: 12px 5px; 
+                border-radius: 10px; 
+                border: 1px solid #e0e0e0;
+                border-top: 4px solid #2e4053; 
+                text-align: center; 
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }}
+            .card-title {{ color: #7f8c8d !important; font-size: 13px; margin-bottom: 6px; font-weight: 600; }}
+            .card-value {{ color: #2c3e50 !important; font-weight: 800; font-size: 19px; margin-bottom: 2px; }}
+        </style>
+        <div class="flex-container">
+            <div class="flex-card">
+                <div class="card-title">A안(원안)</div>
+                <div class="card-value">${abs(res['a']):,.2f}</div>
+                <div style="height: 25px;"></div> </div>
+            <div class="flex-card">
+                <div class="card-title">B안</div>
+                <div class="card-value">${abs(res['b']):,.2f}</div>
+                {get_delta_html(d_b)}
+            </div>
+            <div class="flex-card">
+                <div class="card-title">C안</div>
+                <div class="card-value">${abs(res['c']):,.2f}</div>
+                {get_delta_html(d_c)}
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
 # --- 6. 대시보드 출력 (res_area 사용) ---
 with res_area:
     def get_delta_html(delta_val):
