@@ -11,7 +11,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 1. Core Logic (부호 체계 정립: 가치(+), 비용(-)) ---
 def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
                   au_p, au_a, au_py, au_rc, au_dt, au_dv, 
                   ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv):
@@ -19,35 +18,42 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # --- 1. Cu 가치 수정 ---
-    # content를 %가 아닌 '소수점 비율'로 바로 계산
+    # --- 1. Cu 가치 (RC 절감 반영) ---
     if cu_dt == "PD":
-        # (25% * 100%) - 0.25% = 24.75% -> 0.2475
+        # (Assay * Pay%) - Unit Deduction (예: 25 * 1.0 - 0.25 = 24.75%)
         cu_payable_ratio = (cu_a * (cu_py / 100.0) - cu_dv) / 100.0
     else:
-        # (25% * (100%-1.25%)) = 24.6875% -> 0.246875
+        # Assay * (Pay% - Margin Deduction%) (예: 25 * (1.0 - 0.0125) = 24.6875%)
         cu_payable_ratio = (cu_a * (cu_py - cu_dv) / 100.0) / 100.0
     
-    # 가치 = (지불비율 * 가격) - (지불비율 * RC * lb환산)
-    v_cu_pay = (cu_payable_ratio * cu_p) - (max(0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
+    # 가치 = (지불량 * 가격) - (지불량 * RC($/MT환산))
+    v_cu_pay = (cu_payable_ratio * cu_p) - (max(0.0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
     
-  # 2. Ag 가치 (지불 금속량에 비례하여 RC 차감)
+    # --- 2. Ag 가치 (실질 손익 반영) ---
     if ag_dt == "PD":
+        # (g/t * Pay%) - Unit Deduction (예: 50 * 0.9 - 20 = 25g)
         ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else:
+        # g/t * (Pay% - Margin Deduction%)
         ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
 
-    v_ag_pay = (max(0, ag_payable_content) * g_to_oz * ag_p) - (max(0, ag_payable_content) * g_to_oz * ag_rc)
+    # Oz로 환산 후 (가격 - RC) 적용 -> 지불량이 줄면 RC 차감액도 줄어듦
+    v_ag_pay = max(0.0, ag_payable_content) * g_to_oz * (ag_p - ag_rc)
     
-    # 3. Au 가치 (지불 금속량에 비례하여 RC 차감)
+    # --- 3. Au 가치 (실질 손익 반영) ---
     if au_dt == "PD":
+        # (g/t * Pay%) - Unit Deduction (예: 5 * 0.9 - 1 = 3.5g)
         au_payable_content = (au_a * (au_py / 100.0)) - au_dv
     else:
+        # g/t * (Pay% - Margin Deduction%)
         au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
         
-    v_au_pay = (max(0, au_payable_content) * g_to_oz * au_p) - (max(0, au_payable_content) * g_to_oz * au_rc)
+    v_au_pay = max(0.0, au_payable_content) * g_to_oz * (au_p - au_rc)
     
+    # --- 최종 Net 가치 ---
+    # 가치 합산에서 고정 비용인 TC를 차감
     return (v_cu_pay + v_ag_pay + v_au_pay) - tc
+                      
 st.info("""
     **📢 공지사항 (Notice)**
     * 본 계산기는 **DMT(Dry Metric Ton) 1톤**기준으로 함 """)                      
