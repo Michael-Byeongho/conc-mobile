@@ -65,99 +65,78 @@ with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
         ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
         au_a = st.number_input("Au Assay (g/DMT)", value=5.0)
 
-# --- 4. 상세 입력 (A, B, C안) ---
-tabs = st.tabs(["A안(Base)", "B안", "C안"])
-cases = [("A (Base)안", "a", 30.0), ("B안", "b", 30.0), ("C안", "c", 30.0)]
-data = {}
+# --- 4. Calculation (모든 안의 최종 Net 계산) ---
+res = {k: calc_unit_net(mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
+                        au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"],
+                        ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]) for _, k, _ in cases}
 
-for i, (name, k, def_tc) in enumerate(cases):
-    with tabs[i]:
-        st.markdown(f"<div class='section-head'>{name} - Metals Terms</div>", unsafe_allow_html=True)
-        c_cu1, c_cu2, c_cu3 = st.columns(3)
-        data[f"cu_py_{k}"] = c_cu1.number_input("Cu Pay (%)", value=100.0, key=f"cp_{k}")
-        data[f"cu_dt_{k}"] = c_cu2.radio("Cu Deduct", ["PD", "MD"], horizontal=True, key=f"cdt_{k}")
-        data[f"cu_dv_{k}"] = c_cu3.number_input("Cu PD/MD Val", value=1.25, key=f"cdv_{k}")
-        
-        st.divider()
-        c_ag1, c_ag2, c_ag3 = st.columns(3)
-        data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=90.0, key=f"ap_{k}")
-        data[f"ag_dt_{k}"] = c_ag2.radio("Ag Deduct", ["PD", "MD"], horizontal=True, key=f"adt_{k}")
-        data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=50.0, key=f"adv_{k}")
+# --- 5. 결과 출력 (Sidebar & Top Dashboard) ---
+with st.sidebar:
+    st.markdown("---")
+    st.subheader("📊 최종 계산 결과")
+    st.metric("A (비교기준값)", f"${abs(res['a']):,.2f} /t")
+    st.metric("B안 톤당이익 (vs A)", f"${abs(res['b']):,.2f} /t", f"{res['b'] - res['a']:,.2f}")
+    st.metric("C안 톤당이익 (vs A)", f"${abs(res['c']):,.2f} /t", f"{res['c'] - res['a']:,.2f}")
 
-        st.divider()
-        c_au1, c_au2, c_au3 = st.columns(3)
-        data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=90.0, key=f"aup_{k}")
-        data[f"au_dt_{k}"] = c_au2.radio("Au Deduct", ["PD", "MD"], horizontal=True, key=f"audt_{k}")
-        data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.25, key=f"audv_{k}")
-        
-        st.markdown(f"<div class='section-head'>📉 TC/RC</div>", unsafe_allow_html=True)
-        c_tr1, c_tr2 = st.columns(2)
-        data[f"tc_{k}"] = c_tr1.number_input("TC ($/DMT)", value=def_tc, key=f"tc_{k}")
-        data[f"cu_rc_{k}"] = c_tr1.number_input("Cu RC (c/lb)", value=8.0, key=f"curc_{k}")
-        data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.4, key=f"agrc_{k}")
-        data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=5.0, key=f"aurc_{k}")
+# (이전에 만든 최상단 res_placeholder에 결과 채우기)
+d_b = res['b'] - res['a']
+d_c = res['c'] - res['a']
 
-# --- 5. 실시간 계산 ---
-res = {}
-for _, k, _ in cases:
-    res[k] = calc_unit_net(
-        mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
-        au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"],
-        ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]
-    )
+with res_placeholder:
+    st.markdown(f"""
+        <div style="margin-top: 10px; margin-bottom: 20px;">
+            <p style="font-weight: bold; margin-bottom: 5px;">📊 분석 결과 요약</p>
+            <div style="display: flex; justify-content: space-between; gap: 10px;">
+                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
+                    <div style="font-size:12px; color:#7f8c8d;">A안 (Base)</div>
+                    <div style="font-size:22px; font-weight:bold;">${abs(res['a']):,.2f}</div>
+                </div>
+                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
+                    <div style="font-size:12px; color:#7f8c8d;">B안</div>
+                    <div style="font-size:22px; font-weight:bold;">${abs(res['b']):,.2f}</div>
+                    <div style="font-size:14px; font-weight:bold; color:{'green' if d_b > 0 else 'red'}">
+                        {'▲' if d_b > 0 else '▼'} {abs(d_b):,.2f}
+                    </div>
+                </div>
+                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
+                    <div style="font-size:12px; color:#7f8c8d;">C안</div>
+                    <div style="font-size:22px; font-weight:bold;">${abs(res['c']):,.2f}</div>
+                    <div style="font-size:14px; font-weight:bold; color:{'green' if d_c > 0 else 'red'}">
+                        {'▲' if d_c > 0 else '▼'} {abs(d_c):,.2f}
+                    </div>
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
-# --- 6. 협상 타겟 계산 (TC Gap 분석) ---
+# --- 6. 협상 타겟 계산 (Break-even TC) ---
 st.markdown("---")
-st.markdown("### 🎯 A안 대비 B안 비교 및 조정 목표 (Gap)")
+st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
-# 1. 두 안의 Net 결과값 차이
-net_diff = res['b'] - res['a']
+# B안의 순수 금속 가치 (TC 0일 때)
+val_b_pure = abs(calc_unit_net(mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
+                               au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
+                               ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']))
 
-# 2. Gap을 메꾸기 위한 TC 조정액 계산
-if "Purchase" in mode:
-    required_tc_adj = -net_diff
-else:
-    required_tc_adj = net_diff
+# A안의 최종 Net을 맞추기 위한 Target TC
+be_tc = val_b_pure - abs(res['a'])
+diff_tc = be_tc - data['tc_b']
+is_favorable = diff_tc >= -0.0001
 
-# 3. 상태 판별 (유리 / 동일 / 불리)
-if abs(net_diff) < 0.001:  # 동일한 경우
-    status_type = "equal"
-    status_color = "#95a5a6" # 회색
-    bg_color = "#f4f6f7"
-elif net_diff > 0:         # 유리한 경우
-    status_type = "favorable"
-    status_color = "#27ae60" # 녹색
-    bg_color = "#f8fff9"
-else:                      # 불리한 경우
-    status_type = "unfavorable"
-    status_color = "#e74c3c" # 붉은색
-    bg_color = "#fff8f8"
+status_color = "#27ae60" if is_favorable else "#e74c3c"
+bg_color = "#f8fff9" if is_favorable else "#fff8f8"
 
-# 4. 메시지 구성
-if status_type == "equal":
-    analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b>"
-    guide_text = "추가적인 TC 조정 없이도 A안과 같은 수익성을 유지합니다."
-elif status_type == "favorable":
-    analysis_text = f"✅ B안의 금속 조건이 유리합니다. (A안 대비 <b>+${abs(net_diff):,.2f}</b>)"
-    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("낮춰줄(인하)" if "Purchase" in mode else "높여줄(인상)") + " 여유가 있습니다."
-else:
-    analysis_text = f"❌ B안의 금속 조건이 불리합니다. (A안 대비 <b>-${abs(net_diff):,.2f}</b>)"
-    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("더 받아야(인상)" if "Purchase" in mode else "더 깎아야(인하)") + " 합니다."
-
-# 5. UI 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 수준의 수익을 맞추기 위한 B안의 조정가능(필요)액</p>
-        <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
-            {'+' if required_tc_adj > 0.001 else ''}{required_tc_adj:,.2f} $/mt
-        </p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">🎯 목표 TC (Target TC)</p>
+        <p style="margin: 5px 0; color: #2c3e50; font-size: 28px; font-weight: 800;">${be_tc:,.2f}</p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 분석 결과</p>
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 제안 분석</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {analysis_text}<br>
-            <span style="font-size: 13px; color: #7f8c8d;">{guide_text}</span>
+            {f"✅ 현재 제안이 목표 대비 <b>${abs(diff_tc):,.2f}</b> 유리합니다." if is_favorable else 
+             f"❌ 현재 제안이 목표 대비 <b>${abs(diff_tc):,.2f}</b> 불리합니다."}
         </p>
     </div>
 """, unsafe_allow_html=True)
