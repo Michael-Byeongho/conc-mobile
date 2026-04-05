@@ -78,21 +78,21 @@ for i, (name, k, def_tc) in enumerate(cases):
         c_cu1, c_cu2, c_cu3 = st.columns([1,1,1])
         data[f"cu_py_{k}"] = c_cu1.number_input("Cu Pay (%)", value=100.0, key=f"cp_{k}")
         data[f"cu_dt_{k}"] = c_cu2.radio("Cu Deduct", ["PD", "MD"], horizontal=True, key=f"cdt_{k}")
-        data[f"cu_dv_{k}"] = c_cu3.number_input("Cu PD/MD Val", value=1.0, key=f"cdv_{k}")
+        data[f"cu_dv_{k}"] = c_cu3.number_input("Cu PD/MD Val", value=1.25, key=f"cdv_{k}")
         
         # Ag
         st.divider()
         c_ag1, c_ag2, c_ag3 = st.columns([1,1,1])
-        data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=100.0, key=f"ap_{k}")
+        data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=90.0, key=f"ap_{k}")
         data[f"ag_dt_{k}"] = c_ag2.radio("Ag Deduct", ["PD", "MD"], horizontal=True, key=f"adt_{k}")
-        data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=30.0, key=f"adv_{k}")
+        data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=50.0, key=f"adv_{k}")
 
         # Au
         st.divider()
         c_au1, c_au2, c_au3 = st.columns([1,1,1])
-        data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=100.0, key=f"aup_{k}")
+        data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=90.0, key=f"aup_{k}")
         data[f"au_dt_{k}"] = c_au2.radio("Au Deduct", ["PD", "MD"], horizontal=True, key=f"audt_{k}")
-        data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.0, key=f"audv_{k}")
+        data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.25, key=f"audv_{k}")
         
         st.markdown(f"<div class='section-head'>📉 TC/RC</div>", unsafe_allow_html=True)
         c_tr1, c_tr2 = st.columns(2)
