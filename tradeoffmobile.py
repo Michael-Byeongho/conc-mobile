@@ -152,7 +152,7 @@ st.markdown(f"""
 st.markdown(
     """
     <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});" 
-        style="
+        style="""
             width: 100%; 
             padding: 15px; 
             background-color: #2e4053; 
