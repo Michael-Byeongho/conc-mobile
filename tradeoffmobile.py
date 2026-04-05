@@ -43,9 +43,9 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     net = (v_cu_pay + v_ag_pay + v_au_pay) - tc
     return -net if mode == "Purchase (매입)" else net
 
-
-# --- 0. 최상단 앵커 (HTML 방식) ---
+# --- 1. 최상단 앵커 설정 (48라인 근처) ---
 st.markdown('<div id="top"></div>', unsafe_allow_html=True)
+
 # --- 2. 상단 제목 및 포지션 설정 ---
 st.title("⚡ 동정광 Trade off 분석")
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
