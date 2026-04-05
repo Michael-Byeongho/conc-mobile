@@ -1,4 +1,4 @@
-Import streamlit as st
+import streamlit as st
 import pandas as pd
 
 # --- 0. Config & Style (모바일 최적화) ---
