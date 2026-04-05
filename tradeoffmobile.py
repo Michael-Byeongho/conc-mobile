@@ -136,54 +136,52 @@ with res_placeholder:
 
 st.info("💡 불순물 및 기타 변수 제외, 금속 가격 및 payable, TRC 차이 Trade off 확인.")
 
-
 # --- 6. 협상 타겟 계산 (Break-even TC) ---
 st.markdown("---")
 st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
-# 1. 현재 두 안의 정산 결과 차이 (Gap) 계산
-# res['a'], res['b']는 이미 calc_unit_net을 통해 나온 최종 Net $ (TC 포함)
+# 1. 현재 두 안의 최종 정산 결과 (Net $)
+# calc_unit_net 결과값은 매입 시 음수(-), 매출 시 양수(+)로 이미 방향성이 반영되어 있음
 net_a = res['a']
 net_b = res['b']
 
-# B안이 A안과 같아지기 위해 조정해야 할 금액 (Gap)
-# gap > 0 이면 B안이 A안보다 돈을 더 많이 주거나 받는 상황
+# 2. Gap(차이) 계산
+# B안이 A안보다 얼마나 더 유리/불리한지 계산
+# gap > 0 이면 B안이 수익이 더 크거나(매출), 비용이 더 적은(매입) 상태
 gap = net_b - net_a
 
-# 2. Target TC 계산
-# [매입/매출 공통] TC는 비용(Cost) 성격이므로, 
-# B안의 결과값이 A안보다 높다면(gap > 0), 그만큼 TC를 더 높여야(B안의 Net을 깎아야) A와 같아짐
+# 3. Target TC 계산
+# [공통] TC는 Net 값을 낮추는 '비용' 요소입니다.
+# B안이 A안과 똑같아지려면, 현재의 Net 차이(gap)만큼 TC를 조정해야 합니다.
+# 즉, B안의 수익이 A보다 높다면(gap > 0), TC를 그만큼 더 받아야(높여야) A와 같아집니다.
 be_tc = data['tc_b'] + gap
 
-# 3. 유불리 분석 및 메시지 구성
-# 매입(Purchase)일 때: B안의 Net이 A안보다 작아야(gap < 0) 유리함 = 내가 돈을 적게 주니까
-# 매출(Sales)일 때: B안의 Net이 A안보다 커야(gap > 0) 유리함 = 내가 돈을 많이 받으니까
+# 4. 유불리 분석 및 UI 메시지
+# 매입(Purchase): Net 값이 작을수록(음수 절대값이 작을수록) 유리 -> net_b >= net_a 가 유리
+# 매출(Sales): Net 값이 클수록(양수 절대값이 클수록) 유리 -> net_b >= net_a 가 유리
+# 결론적으로 gap(net_b - net_a) >= 0 이면 B안이 유리한 조건임
 
-if mode == "Purchase":
-    is_favorable = net_b <= net_a  # 적게 지불할수록 유리
-    diff_val = abs(gap)
-    status_msg = f"✅ B안이 A안보다 <b>${diff_val:,.2f}</b> 적게 지불하므로 유리합니다." if is_favorable else \
-                 f"❌ B안이 A안보다 <b>${diff_val:,.2f}</b> 더 많이 지불하므로 불리합니다."
-else:  # Sales
-    is_favorable = net_b >= net_a  # 많이 받을수록 유리
-    diff_val = abs(gap)
-    status_msg = f"✅ B안이 A안보다 <b>${diff_val:,.2f}</b> 더 많이 받으므로 유리합니다." if is_favorable else \
-                 f"❌ B안이 A안보다 <b>${diff_val:,.2f}</b> 적게 받으므로 불리합니다."
-
+is_favorable = gap >= -0.0001
 status_color = "#27ae60" if is_favorable else "#e74c3c"
 bg_color = "#f8fff9" if is_favorable else "#fff8f8"
 
-# UI 출력 (HTML 부분은 동일, 변수만 매칭)
+# 포지션별 메시지 최적화
+if mode == "Purchase (매입)":
+    analysis_text = f"현재 B안이 A안보다 지불 금액이 <b>${abs(gap):,.2f}</b> " + ("적어 유리합니다." if is_favorable else "많아 불리합니다.")
+else:
+    analysis_text = f"현재 B안이 A안보다 수령 금액이 <b>${abs(gap):,.2f}</b> " + ("많아 유리합니다." if is_favorable else "적어 불리합니다.")
+
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">🎯 A안과 동일해지기 위한 B안의 목표 TC</p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">🎯 A안과 동일한 수익성을 갖기 위한 B안의 목표 TC</p>
         <p style="margin: 5px 0; color: #2c3e50; font-size: 28px; font-weight: 800;">${be_tc:,.2f}</p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 A안 대비 B안 분석</p>
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 제안 분석 (vs A안 Base)</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {status_msg}
+            {analysis_text}<br>
+            <span style="font-size: 12px; color: #7f8c8d;">(상기 목표 TC보다 B안의 TC를 더 <b>{'높게' if mode == "Purchase (매입)" else '낮게'}</b> 협상해야 유리해집니다.)</span>
         </p>
     </div>
 """, unsafe_allow_html=True)
