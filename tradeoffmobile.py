@@ -19,13 +19,17 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # 1. Cu 가치 (Deduction이 시장가를 직접 차감)
+    # --- 1. Cu 가치 수정 ---
+    # content를 %가 아닌 '소수점 비율'로 바로 계산
     if cu_dt == "PD":
-        cu_payable_content = (cu_a * (cu_py / 100.0)) - cu_dv
+        # (25% * 100%) - 0.25% = 24.75% -> 0.2475
+        cu_payable_ratio = (cu_a * (cu_py / 100.0) - cu_dv) / 100.0
     else:
-        cu_payable_content = cu_a * (cu_py / 100.0 - cu_dv / 100.0)
-    # 가치 = (지불대상금속 * 가격) - (지불대상금속 * RC)
-    v_cu_pay = (cu_payable_content / 100.0) * cu_p - (max(0, cu_payable_content) / 100.0) * (cu_rc * lb_to_mt)
+        # (25% * (100%-1.25%)) = 24.6875% -> 0.246875
+        cu_payable_ratio = (cu_a * (cu_py - cu_dv) / 100.0) / 100.0
+    
+    # 가치 = (지불비율 * 가격) - (지불비율 * RC * lb환산)
+    v_cu_pay = (cu_payable_ratio * cu_p) - (max(0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
     
     # 2. Ag 가치 (은 20g PD 차이 = $45.01 보장)
     if ag_dt == "PD":
