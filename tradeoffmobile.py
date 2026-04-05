@@ -132,24 +132,24 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- 7. 최상단 이동 버튼 ---
+# --- 7. 최상단 이동 버튼 (앵커 방식) ---
 st.markdown("""
-    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});" 
-        style="
+    <a href="#link_to_top" style="text-decoration: none;">
+        <div style="
             width: 100%; 
             padding: 15px; 
             background-color: #2e4053; 
             color: white; 
-            border: none; 
             border-radius: 10px; 
             font-size: 16px; 
             font-weight: bold; 
+            text-align: center;
             margin-top: 30px; 
             margin-bottom: 20px;
-            cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         ">
-        ⬆️ 최상단으로 돌아가기
-    </button>
+            ⬆️ 최상단으로 돌아가기
+        </div>
+    </a>
     """, unsafe_allow_html=True)
 
