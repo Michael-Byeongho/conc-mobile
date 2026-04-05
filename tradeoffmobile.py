@@ -45,13 +45,13 @@ res_area = st.container()
 with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=False): # 모바일에서는 기본적으로 접어둠
     c1, c2 = st.columns(2) # 모바일은 3컬럼보다 2컬럼이 한계선입니다.
 with c1:
-cu_p = st.number_input("Cu Price ($/MT)", value=12000.0)
-ag_p = st.number_input("Ag Price ($/Oz)", value=70.0)
-au_p = st.number_input("Au Price ($/Oz)", value=4500.0)
+    cu_p = st.number_input("Cu Price ($/MT)", value=12000.0)
+    ag_p = st.number_input("Ag Price ($/Oz)", value=70.0)
+    au_p = st.number_input("Au Price ($/Oz)", value=4500.0)
 with c2:
-cu_a = st.number_input("Cu Assay (%)", value=25.0)
-ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
-au_a = st.number_input("Au Assay (g/DMT)", value=10.0)
+    cu_a = st.number_input("Cu Assay (%)", value=25.0)
+    ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
+    au_a = st.number_input("Au Assay (g/DMT)", value=10.0)
 
 # --- 4. Main Inputs (탭 UI 적용) ---
 st.markdown("### ⚖️ 조건 세부 설정")
