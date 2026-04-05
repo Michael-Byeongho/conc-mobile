@@ -36,9 +36,7 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
         ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else:
         ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
-    
-    # 가치 = (지불량 * Oz환산 * 가격) - (지불량 * Oz환산 * RC)
-    # 지불량이 줄어들면 뒤쪽의 RC 차감액도 함께 줄어듭니다.
+
     v_ag_pay = (max(0, ag_payable_content) * g_to_oz * ag_p) - (max(0, ag_payable_content) * g_to_oz * ag_rc)
     
     # 3. Au 가치 (지불 금속량에 비례하여 RC 차감)
@@ -48,19 +46,6 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
         au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
         
     v_au_pay = (max(0, au_payable_content) * g_to_oz * au_p) - (max(0, au_payable_content) * g_to_oz * au_rc)
-    
-    # 3. Au 가치
-    if au_dt == "PD":
-        au_payable_content = (au_a * (au_py / 100.0)) - au_dv
-    else:
-        au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
-    v_au_pay = (au_payable_content * g_to_oz * au_p) - (max(0, au_payable_content) * g_to_oz * au_rc)
-    
-    # [핵심 수정] 
-    # 매출(Sales): (금속가치 - TC) -> 숫자가 클수록 내 수익이 커짐 (+)
-    # 매입(Purchase): (금속가치 - TC) -> 숫자가 클수록 내 지불 대비 가치가 높음 (+)
-    # 즉, 모드에 상관없이 '금속가치 - TC'를 반환합니다.
-    # 이렇게 해야 B - A > 0 일 때 항상 'B가 유리'하다는 논리가 성립합니다.
     
     return (v_cu_pay + v_ag_pay + v_au_pay) - tc
 st.info("""
