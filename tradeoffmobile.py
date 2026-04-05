@@ -35,7 +35,7 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, au_p, au_a, 
     return -net if mode == "Purchase (매입)" else net
 
 # --- 2. 최상단 대시보드 ---
-st.title("⚡ 실시간 델타 툴")
+st.title("⚡ 동정광 Trade off 분석")
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
 
 res_area = st.container()
@@ -54,7 +54,7 @@ with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=False):
 
 # --- 4. Main Inputs (탭 UI) ---
 st.markdown("### ⚖️ 조건 세부 설정")
-tabs = st.tabs(["🅰️ Base (A안)", "🅱️ B안", "🅲 C안"])
+tabs = st.tabs(["A안(Base)", "B안", "C안"])
 cases = [("A (Base)안", "a", 80.0), ("B안", "b", 80.0), ("C안", "c", 80.0)]
 data = {}
 
@@ -109,9 +109,9 @@ res = {k: calc_unit_net(mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], d
 
 with res_area:
     m1, m2, m3 = st.columns(3)
-    with m1: st.metric("🅰️ Base", f"${abs(res['a']):,.0f}/t")
-    with m2: st.metric("🅱️ B안 델타", f"${abs(res['b']):,.0f}/t", f"{res['b'] - res['a']:,.2f}")
-    with m3: st.metric("🅲 C안 델타", f"${abs(res['c']):,.0f}/t", f"{res['c'] - res['a']:,.2f}")
+    with m1: st.metric("A안(기존,Base)", f"${abs(res['a']):,.0f}/t")
+    with m2: st.metric("B안", f"${abs(res['b']):,.0f}/t", f"{res['b'] - res['a']:,.2f}")
+    with m3: st.metric("C안", f"${abs(res['c']):,.0f}/t", f"{res['c'] - res['a']:,.2f}")
 
 # --- 6. 협상 타겟 계산 ---
 st.markdown("---")
