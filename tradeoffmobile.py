@@ -29,13 +29,12 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dv, au_p, au_a, au_py, 
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # Payable 계산 (Deduction 방식 통합: dv값 자체가 PD/MD를 반영한 순수 공제후 품위라고 가정하거나 별도 로직 필요)
-    # 여기서는 제공된 로직을 유지하되 변수 불일치만 수정함
+    # Payable 가치 계산
     v_cu_pay = (cu_a * (cu_py / 100.0) / 100.0) * (cu_p - (cu_rc / 100.0 * lb_to_mt))
     v_ag_pay = (ag_a * (ag_py / 100.0) * g_to_oz) * (ag_p - ag_rc)
     v_au_pay = (au_a * (au_py / 100.0) * g_to_oz) * (au_p - au_rc)
     
-    # Unit Deductions
+    # Unit Deductions (공제 품위 가치)
     d_cu = (cu_dv / 100.0) * cu_p
     d_ag = (ag_dv * g_to_oz) * ag_p
     d_au = (au_dv * g_to_oz) * au_p
@@ -48,7 +47,7 @@ st.markdown("<div id='link_to_top'></div>", unsafe_allow_html=True)
 st.title("⚡ 동정광 Trade off 분석")
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
 
-# 결과가 표시될 컨테이너 미리 생성
+# 결과 대시보드가 들어갈 자리
 res_area = st.container()
 
 # --- 3. 공통 변수 ---
@@ -98,7 +97,7 @@ for i, (name, k, def_tc) in enumerate(cases):
             data[f"ag_rc_{k}"] = st.number_input("Ag RC($/oz)", value=0.5, key=f"agrc_{k}")
             data[f"au_rc_{k}"] = st.number_input("Au RC($/oz)", value=5.0, key=f"aurc_{k}")
 
-# --- 5. Calculation (데이터 생성 후 계산) ---
+# --- 5. Calculation ---
 res = {}
 for k in ['a', 'b', 'c']:
     res[k] = calc_unit_net(
@@ -110,36 +109,20 @@ for k in ['a', 'b', 'c']:
 d_b = res['b'] - res['a']
 d_c = res['c'] - res['a']
 
-# --- 6. 대시보드 출력 (색상 로직 강화) ---
+# --- 6. 대시보드 출력 (중복 제거 & 통합 버전) ---
 with res_area:
     def get_delta_html(delta_val):
-        # 양수일 때 (초록색)
         if delta_val > 0.01: 
-            color = "#1e8449" # 진한 초록
-            bg = "#e8f8f5"
-            symbol = "▲"
-        # 음수일 때 (빨간색)
+            color, bg, symbol = "#1e8449", "#e8f8f5", "▲"
         elif delta_val < -0.01:
-            color = "#c0392b" # 진한 빨강
-            bg = "#fdedec"
-            symbol = "▼"
-        # 변동 없을 때 (회색)
+            color, bg, symbol = "#c0392b", "#fdedec", "▼"
         else:
-            color = "#7f8c8d"
-            bg = "#f2f4f4"
-            symbol = "-"
+            color, bg, symbol = "#7f8c8d", "#f2f4f4", "-"
             
         return f"""
-            <span style="
-                color: {color} !important; 
-                background-color: {bg} !important; 
-                padding: 2px 8px; 
-                border-radius: 4px; 
-                font-weight: bold; 
-                font-size: 13px; 
-                display: inline-block;
-                margin-top: 4px;
-            ">
+            <span style="color: {color} !important; background-color: {bg} !important; 
+            padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 13px; 
+            display: inline-block; margin-top: 4px;">
                 {symbol} {abs(delta_val):,.2f}
             </span>
         """
@@ -148,13 +131,8 @@ with res_area:
         <style>
             .flex-container {{ display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-bottom: 20px; }}
             .flex-card {{ 
-                flex: 1; 
-                background-color: #ffffff; 
-                padding: 12px 5px; 
-                border-radius: 10px; 
-                border: 1px solid #e0e0e0;
-                border-top: 4px solid #2e4053; 
-                text-align: center; 
+                flex: 1; background-color: #ffffff; padding: 12px 5px; border-radius: 10px; 
+                border: 1px solid #e0e0e0; border-top: 4px solid #2e4053; text-align: center; 
                 box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             }}
             .card-title {{ color: #7f8c8d !important; font-size: 13px; margin-bottom: 6px; font-weight: 600; }}
@@ -164,44 +142,7 @@ with res_area:
             <div class="flex-card">
                 <div class="card-title">A안(원안)</div>
                 <div class="card-value">${abs(res['a']):,.2f}</div>
-                <div style="height: 25px;"></div> </div>
-            <div class="flex-card">
-                <div class="card-title">B안</div>
-                <div class="card-value">${abs(res['b']):,.2f}</div>
-                {get_delta_html(d_b)}
-            </div>
-            <div class="flex-card">
-                <div class="card-title">C안</div>
-                <div class="card-value">${abs(res['c']):,.2f}</div>
-                {get_delta_html(d_c)}
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-
-
-
-# --- 6. 대시보드 출력 (res_area 사용) ---
-with res_area:
-    def get_delta_html(delta_val):
-        if delta_val > 0:
-            return f"<span style='color: #1e8449 !important; background-color: #e8f8f5 !important; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;'>▲ {delta_val:,.2f}</span>"
-        elif delta_val < 0:
-            return f"<span style='color: #c0392b !important; background-color: #fdedec !important; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;'>▼ {abs(delta_val):,.2f}</span>"
-        else:
-            return f"<span style='color: #7f8c8d !important; background-color: #f2f4f4 !important; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;'>- 0.00</span>"
-
-    st.markdown(f"""
-        <style>
-            .flex-container {{ display: flex; justify-content: space-between; gap: 8px; width: 100%; margin-bottom: 20px; }}
-            .flex-card {{ flex: 1; background-color: #f8f9fa; padding: 10px 5px; border-radius: 8px; border-left: 4px solid #2e4053; text-align: center; }}
-            .card-title {{ color: #7f8c8d; font-size: 13px; margin-bottom: 4px; }}
-            .card-value {{ color: #2c3e50; font-weight: 900; font-size: 18px; margin-bottom: 5px; }}
-        </style>
-        <div class="flex-container">
-            <div class="flex-card">
-                <div class="card-title">A안(원안)</div>
-                <div class="card-value">${abs(res['a']):,.2f}</div>
+                <div style="height: 25px;"></div>
             </div>
             <div class="flex-card">
                 <div class="card-title">B안</div>
@@ -219,12 +160,10 @@ with res_area:
 # --- 7. 협상 타겟 계산 ---
 st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
-# TC를 0으로 잡고 나머지 조건만으로 Net 계산
 net_b_no_tc = calc_unit_net(mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dv_b'],
                             au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dv_b'],
                             ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dv_b'])
 
-# A안과 동일한 수익을 내기 위한 TC 산출
 if mode == "Purchase (매입)":
     be_tc = res['a'] - net_b_no_tc
     diff_tc = be_tc - data['tc_b']
@@ -247,33 +186,21 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- 7. 최상단 이동 버튼 (앵커 방식 - 색상 강제 고정) ---
+# --- 8. 최상단 이동 버튼 (색상 강제 고정) ---
 st.markdown("""
     <a href="#link_to_top" style="text-decoration: none !important; color: white !important;">
         <div style="
-            width: 100%; 
-            padding: 15px; 
-            background-color: #2e4053; 
-            border-radius: 10px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            text-align: center;
-            margin-top: 30px; 
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            color: white !important;
+            width: 100%; padding: 15px; background-color: #2e4053; border-radius: 10px; 
+            font-size: 16px; font-weight: bold; text-align: center; margin-top: 30px; 
+            margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: white !important;
         ">
             <span style="color: white !important;">⬆️ 최상단으로 돌아가기</span>
         </div>
     </a>
     <style>
-        /* 링크 상태에 따른 모든 색상을 흰색으로 강제 고정 */
-        a[href="#link_to_top"]:link, 
-        a[href="#link_to_top"]:visited, 
-        a[href="#link_to_top"]:hover, 
-        a[href="#link_to_top"]:active {
-            color: white !important;
-            text-decoration: none !important;
+        a[href="#link_to_top"]:link, a[href="#link_to_top"]:visited, 
+        a[href="#link_to_top"]:hover, a[href="#link_to_top"]:active {
+            color: white !important; text-decoration: none !important;
         }
     </style>
     """, unsafe_allow_html=True)
