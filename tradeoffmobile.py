@@ -178,6 +178,9 @@ with res_area:
         </div>
     """, unsafe_allow_html=True)
 
+
+
+
 # --- 6. 대시보드 출력 (res_area 사용) ---
 with res_area:
     def get_delta_html(delta_val):
