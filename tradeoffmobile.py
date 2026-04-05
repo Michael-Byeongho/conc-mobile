@@ -87,15 +87,16 @@ for i, (name, k, def_tc) in enumerate(cases):
         # Ag
         st.divider()
         c_ag1, c_ag2, c_ag3 = st.columns(3)
-        data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=90.0, key=f"ap_{k}")
-        data[f"ag_dt_{k}"] = c_ag2.radio("Ag Deduct", ["PD", "MD"], horizontal=True, key=f"adt_{k}")
-        data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=50.0, key=f"adv_{k}")
+        # key 이름을 호출부에서 쓰는 ag_py_{k}, ag_dt_{k}, ag_dv_{k}로 통일!
+        data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=90.0, key=f"ag_py_{k}")
+        data[f"ag_dt_{k}"] = c_ag2.radio("Ag Deduct", ["PD", "MD"], horizontal=True, key=f"ag_dt_{k}")
+        data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=50.0, key=f"ag_dv_{k}")
         # Au
         st.divider()
         c_au1, c_au2, c_au3 = st.columns(3)
-        data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=90.0, key=f"aup_{k}")
-        data[f"au_dt_{k}"] = c_au2.radio("Au Deduct", ["PD", "MD"], horizontal=True, key=f"audt_{k}")
-        data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.25, key=f"audv_{k}")
+        data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=90.0, key=f"au_py_{k}")
+        data[f"au_dt_{k}"] = c_au2.radio("Au Deduct", ["PD", "MD"], horizontal=True, key=f"au_dt_{k}")
+        data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.25, key=f"au_dv_{k}")
         # TC/RC
         st.markdown(f"<div class='section-head'>📉 TC/RC</div>", unsafe_allow_html=True)
         c_tr1, c_tr2 = st.columns(2)
