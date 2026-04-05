@@ -82,13 +82,13 @@ for i, name in enumerate(["a", "b", "c"]):
         with col_ag:
             st.caption("Silver")
             ag_py = st.number_input("Pay (%)", value=90.0, key=f"agpy_{name}")
-            ag_dt = st.radio("Deduct", ["PD", "MD"], index=1, key=f"agdt_{name}")
+            ag_dt = st.radio("Deduct", ["PD", "MD"], key=f"agdt_{name}")
             ag_dv = st.number_input("Val", value=30.0, key=f"agdv_{name}")
 
         with col_au:
             st.caption("Gold")
             au_py = st.number_input("Pay (%)", value=90.0, key=f"aupy_{name}")
-            au_dt = st.radio("Deduct", ["PD", "MD"], index=1, key=f"audt_{name}")
+            au_dt = st.radio("Deduct", ["PD", "MD"], key=f"audt_{name}")
             au_dv = st.number_input("Val", value=1.0, key=f"audv_{name}")
 
 
