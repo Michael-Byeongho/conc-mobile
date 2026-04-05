@@ -115,7 +115,7 @@ with res_area:
 
 # --- 6. 협상 타겟 계산 ---
 st.markdown("---")
-st.markdown("### 🎯 B안 협상 가이드")
+st.markdown("### 🎯 협상 목표 계산기(payable vs TC/ AvsB)")
 
 net_b_no_tc = calc_unit_net(mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
                             au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
