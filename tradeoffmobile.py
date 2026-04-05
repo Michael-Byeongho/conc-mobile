@@ -11,7 +11,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 1. Core Logic (은 20g = $45.01 차이 보장) ---
+# --- 1. Core Logic (부호 체계 정립: 가치(+), 비용(-)) ---
 def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
                   au_p, au_a, au_py, au_rc, au_dt, au_dv, 
                   ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv):
@@ -19,29 +19,36 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # Cu 가치 (Deduction이 시장가를 따르도록 수정)
+    # 1. Cu 가치 (Deduction이 시장가를 직접 차감)
     if cu_dt == "PD":
         cu_payable_content = (cu_a * (cu_py / 100.0)) - cu_dv
     else:
         cu_payable_content = cu_a * (cu_py / 100.0 - cu_dv / 100.0)
+    # 가치 = (지불대상금속 * 가격) - (지불대상금속 * RC)
     v_cu_pay = (cu_payable_content / 100.0) * cu_p - (max(0, cu_payable_content) / 100.0) * (cu_rc * lb_to_mt)
     
-    # Ag 가치 (20g PD 차이 = 정확히 $45.01)
+    # 2. Ag 가치 (은 20g PD 차이 = $45.01 보장)
     if ag_dt == "PD":
         ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else:
         ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
     v_ag_pay = (ag_payable_content * g_to_oz * ag_p) - (max(0, ag_payable_content) * g_to_oz * ag_rc)
     
-    # Au 가치
+    # 3. Au 가치
     if au_dt == "PD":
         au_payable_content = (au_a * (au_py / 100.0)) - au_dv
     else:
         au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
     v_au_pay = (au_payable_content * g_to_oz * au_p) - (max(0, au_payable_content) * g_to_oz * au_rc)
     
-    net = (v_cu_pay + v_ag_pay + v_au_pay) - tc
-    return -net if mode == "Purchase (매입)" else net
+    # [핵심 수정] 
+    # 매출(Sales): (금속가치 - TC) -> 숫자가 클수록 내 수익이 커짐 (+)
+    # 매입(Purchase): (금속가치 - TC) -> 숫자가 클수록 내 지불 대비 가치가 높음 (+)
+    # 즉, 모드에 상관없이 '금속가치 - TC'를 반환합니다.
+    # 이렇게 해야 B - A > 0 일 때 항상 'B가 유리'하다는 논리가 성립합니다.
+    
+    return (v_cu_pay + v_ag_pay + v_au_pay) - tc
+                      
 
 # --- 2. 상단 레이아웃 ---
 st.title("⚡ 동정광 Trade off 분석")
