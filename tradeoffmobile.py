@@ -52,10 +52,10 @@ with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
     market = {
         "cu_p": c1.number_input("Cu Price ($/MT)", value=12000.0),
         "cu_a": c1.number_input("Cu Assay (%)", value=25.0),
-        "ag_p": c3.number_input("Ag Price ($/Oz)", value=70.0),
-        "ag_a": c3.number_input("Ag Assay (g/DMT)", value=350.0),
-        "au_p": c2.number_input("Au Price ($/Oz)", value=4500.0),
-        "au_a": c2.number_input("Au Assay (g/DMT)", value=5.0),
+        "ag_p": c2.number_input("Ag Price ($/Oz)", value=70.0),
+        "ag_a": c2.number_input("Ag Assay (g/DMT)", value=350.0),
+        "au_p": c3.number_input("Au Price ($/Oz)", value=4500.0),
+        "au_a": c3.number_input("Au Assay (g/DMT)", value=5.0),
     }
 
 # --- 4. 시나리오별 입력 ---
@@ -78,6 +78,12 @@ for i, name in enumerate(["a", "b", "c"]):
             cu_py = st.number_input("Pay (%)", value=96.5, key=f"cupy_{name}")
             cu_dt = st.radio("Deduct", ["PD", "MD"], key=f"cudt_{name}")
             cu_dv = st.number_input("Val", value=1.0, key=f"cudv_{name}")
+        
+        with col_ag:
+            st.caption("Silver")
+            ag_py = st.number_input("Pay (%)", value=90.0, key=f"agpy_{name}")
+            ag_dt = st.radio("Deduct", ["PD", "MD"], index=1, key=f"agdt_{name}")
+            ag_dv = st.number_input("Val", value=30.0, key=f"agdv_{name}")
 
         with col_au:
             st.caption("Gold")
@@ -85,11 +91,7 @@ for i, name in enumerate(["a", "b", "c"]):
             au_dt = st.radio("Deduct", ["PD", "MD"], index=1, key=f"audt_{name}")
             au_dv = st.number_input("Val", value=1.0, key=f"audv_{name}")
 
-        with col_ag:
-            st.caption("Silver")
-            ag_py = st.number_input("Pay (%)", value=90.0, key=f"agpy_{name}")
-            ag_dt = st.radio("Deduct", ["PD", "MD"], index=1, key=f"agdt_{name}")
-            ag_dv = st.number_input("Val", value=30.0, key=f"agdv_{name}")
+
 
         res[name] = calculate_net_value(mode, tc, market, {
             "cu_py": cu_py, "cu_dt": cu_dt, "cu_dv": cu_dv, "cu_rc": cu_rc,
