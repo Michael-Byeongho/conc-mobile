@@ -18,41 +18,36 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # --- 1. Cu 가치 (RC 절감 반영) ---
+    # --- 1. 금속별 Net 가치 (광석 자체의 가치 산출) ---
+    # Cu
     if cu_dt == "PD":
-        # (Assay * Pay%) - Unit Deduction (예: 25 * 1.0 - 0.25 = 24.75%)
         cu_payable_ratio = (cu_a * (cu_py / 100.0) - cu_dv) / 100.0
     else:
-        # Assay * (Pay% - Margin Deduction%) (예: 25 * (1.0 - 0.0125) = 24.6875%)
         cu_payable_ratio = (cu_a * (cu_py - cu_dv) / 100.0) / 100.0
+    v_cu = (cu_payable_ratio * cu_p) - (max(0.0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
     
-    # 가치 = (지불량 * 가격) - (지불량 * RC($/MT환산))
-    v_cu_pay = (cu_payable_ratio * cu_p) - (max(0.0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
-    
-    # --- 2. Ag 가치 (실질 손익 반영) ---
+    # Ag
     if ag_dt == "PD":
-        # (g/t * Pay%) - Unit Deduction (예: 50 * 0.9 - 20 = 25g)
         ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else:
-        # g/t * (Pay% - Margin Deduction%)
         ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
-
-    # Oz로 환산 후 (가격 - RC) 적용 -> 지불량이 줄면 RC 차감액도 줄어듦
-    v_ag_pay = max(0.0, ag_payable_content) * g_to_oz * (ag_p - ag_rc)
+    v_ag = max(0.0, ag_payable_content) * g_to_oz * (ag_p - ag_rc)
     
-    # --- 3. Au 가치 (실질 손익 반영) ---
+    # Au
     if au_dt == "PD":
-        # (g/t * Pay%) - Unit Deduction (예: 5 * 0.9 - 1 = 3.5g)
         au_payable_content = (au_a * (au_py / 100.0)) - au_dv
     else:
-        # g/t * (Pay% - Margin Deduction%)
         au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
-        
-    v_au_pay = max(0.0, au_payable_content) * g_to_oz * (au_p - au_rc)
+    v_au = max(0.0, au_payable_content) * g_to_oz * (au_p - au_rc)
     
-    # --- 최종 Net 가치 ---
-    # 가치 합산에서 고정 비용인 TC를 차감
-    return (v_cu_pay + v_ag_pay + v_au_pay) - tc
+    # --- 2. 최종 정산 단가 결정 ---
+    # 광석 가치에서 제련소 비용(TC)을 뺀 것이 '정산 단가'
+    net_value = (v_cu + v_ag + v_au) - tc
+
+    if "Purchase" in mode:
+        return -net_value  # 비용 관점 (낮을수록 좋음 -> 마이너스 금액이 작아짐)
+    else:
+        return net_value   # 수익 관점 (높을수록 좋음)
                       
 st.info("""
     **📢 공지사항 (Notice)**
