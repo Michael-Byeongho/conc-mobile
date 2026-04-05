@@ -133,7 +133,7 @@ st.markdown(f"""
             </div>
         </div>
     </div>
-""", 
+""", unsafe_allow_html=True)
 
 # --- 6. 협상 타겟 계산 (Break-even TC) ---
 st.markdown("---")
