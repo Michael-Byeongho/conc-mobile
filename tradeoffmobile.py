@@ -147,4 +147,31 @@ st.markdown(f"""
              f"✅ 목표보다 <b><span style='color:{status_color}'>${abs(diff_tc):,.2f}</span></b> 더 받아냈습니다."}
         </p>
     </div>
+
+
+
+    # --- 7. 최상단 이동 버튼 ---
+st.markdown(
+    """
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});" 
+        style="
+            width: 100%; 
+            padding: 15px; 
+            background-color: #2e4053; 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            margin-top: 30px; 
+            margin-bottom: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        ">
+        ⬆️ 최상단으로 돌아가기
+    </button>
+    """,
+    unsafe_allow_html=True
+)
+
 """, unsafe_allow_html=True)
