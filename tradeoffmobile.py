@@ -65,7 +65,7 @@ res = {} # 결과 저장 딕셔너리 명칭을 res로 통일
 for i, name in enumerate(["a", "b", "c"]):
     with tabs[i]:
         st.markdown(f"<div class='section-head'>{name.upper()}안 조건 설정</div>", unsafe_allow_html=True)
-        col_tc, col_cu, col_au, col_ag = st.columns(4)
+        col_cu, col_ag, col_au, col_tc = st.columns(4)
         
         with col_tc:
             tc = st.number_input(f"TC ($/DMT)", value=80.0, key=f"tc_{name}")
