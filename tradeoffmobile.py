@@ -75,7 +75,7 @@ for i, name in enumerate(["a", "b", "c"]):
         
         with col_cu:
             st.caption("Copper")
-            cu_py = st.number_input("Pay (%)", value=96.5, key=f"cupy_{name}")
+            cu_py = st.number_input("Pay (%)", value=100.0, key=f"cupy_{name}")
             cu_dt = st.radio("Deduct", ["PD", "MD"], key=f"cudt_{name}")
             cu_dv = st.number_input("Val", value=1.0, key=f"cudv_{name}")
         
