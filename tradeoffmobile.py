@@ -50,12 +50,12 @@ res_placeholder = st.empty()
 with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
     c1, c2, c3 = st.columns(3)
     market = {
-        "cu_p": c1.number_input("Cu Price ($/MT)", value=9500.0),
+        "cu_p": c1.number_input("Cu Price ($/MT)", value=12000.0),
         "cu_a": c1.number_input("Cu Assay (%)", value=25.0),
-        "au_p": c2.number_input("Au Price ($/Oz)", value=2300.0),
-        "au_a": c2.number_input("Au Assay (g/DMT)", value=2.0),
-        "ag_p": c3.number_input("Ag Price ($/Oz)", value=28.0),
-        "ag_a": c3.number_input("Ag Assay (g/DMT)", value=50.0)
+        "ag_p": c3.number_input("Ag Price ($/Oz)", value=70.0),
+        "ag_a": c3.number_input("Ag Assay (g/DMT)", value=350.0)
+        "au_p": c2.number_input("Au Price ($/Oz)", value=4500.0),
+        "au_a": c2.number_input("Au Assay (g/DMT)", value=5.0),
     }
 
 # --- 4. 시나리오별 입력 ---
