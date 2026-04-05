@@ -6,13 +6,17 @@ st.set_page_config(page_title="Trade-off & Sensitivity Tool", layout="centered")
 
 st.markdown("""
     <style>
-        html, body, [data-testid="stAppViewContainer"] { background-color: white !important; color: #2c3e50 !important; }
-        .stMarkdown, p, span, label { color: #2c3e50 !important; }
-        .stNumberInput input, .stSelectbox div { color: #2c3e50 !important; }
-        button[data-baseweb="tab"] { font-size: 16px !important; font-weight: bold; }
-        [data-testid="stMetric"] { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid #2e4053; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .section-head { background-color: #2e4053; color: white; padding: 6px 12px; border-radius: 6px; font-size: 14px; margin: 15px 0 10px 0; font-weight: bold; text-align: center; }
-        .md-hint { font-size: 12px; color: #d35400; font-weight: bold; margin-top: 2px; }
+        /* 기본 배경과 글자색 고정 (span에서 !important 제거) */
+        html, body, [data-testid="stAppViewContainer"] {
+            background-color: white !important;
+            color: #2c3e50 !important;
+        }
+        /* 라벨과 일반 텍스트는 검정색 유지 */
+        .stMarkdown, p, label {
+            color: #2c3e50 !important;
+        }
+        /* 세션 헤더 등 특정 요소 색상 */
+        .section-head { background-color: #2e4053; color: white !important; }
     </style>
 """, unsafe_allow_html=True)
 
