@@ -24,7 +24,7 @@ button[data-baseweb="tab"] { font-size: 16px !important; font-weight: bold; }
 
 # --- 1. Core Logic (기존과 동일) ---
 def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, au_p, au_a, au_py, au_rc, au_dt, au_dv, ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv):
-g_to_oz, lb_to_mt = 1/31.1035, 2204.62
+    g_to_oz, lb_to_mt = 1/31.1035, 2204.62
 v_cu_pay = (cu_a * (cu_py/100) / 100) * (cu_p - (cu_rc/100 * lb_to_mt))
 v_ag_pay = (ag_a * (ag_py/100) * g_to_oz) * (ag_p - ag_rc)
 v_au_pay = (au_a * (au_py/100) * g_to_oz) * (au_p - au_rc)
