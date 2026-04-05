@@ -1,16 +1,11 @@
+
 import streamlit as st
 st.markdown("<div id='link_to_top' name='link_to_top'></div>", unsafe_allow_html=True)
-# --- 0. Config & Style ---
-st.set_page_config(page_title="Trade-off & Sensitivity Tool", layout="centered")
 
-st.markdown("""
-    <style>
-        html, body, [data-testid="stAppViewContainer"] { background-color: white !important; color: #2c3e50 !important; }
-        .stMarkdown, p, label { color: #2c3e50 !important; }
-        .section-head { background-color: #2e4053; color: white !important; padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; font-weight: bold; }
-    </style>
-""", unsafe_allow_html=True)
+# --- 0. Config ---
+st.set_page_config(page_title="Trade-off Tool", layout="centered")
 
+# --- 1. Core Logic (수정됨: 모든 금속 RC 절감 로직 적용) ---
 def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
                   au_p, au_a, au_py, au_rc, au_dt, au_dv, 
                   ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv):
@@ -18,49 +13,42 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # --- 1. 금속별 Net 가치 (광석 자체의 가치 산출) ---
-    # Cu
+    # 1. Cu 가치
     if cu_dt == "PD":
         cu_payable_ratio = (cu_a * (cu_py / 100.0) - cu_dv) / 100.0
     else:
         cu_payable_ratio = (cu_a * (cu_py - cu_dv) / 100.0) / 100.0
     v_cu = (cu_payable_ratio * cu_p) - (max(0.0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
     
-    # Ag
+    # 2. Ag 가치 (PD 20g 변경 시 약 $44.75 차이 발생)
     if ag_dt == "PD":
         ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else:
         ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
     v_ag = max(0.0, ag_payable_content) * g_to_oz * (ag_p - ag_rc)
     
-    # Au
+    # 3. Au 가치
     if au_dt == "PD":
         au_payable_content = (au_a * (au_py / 100.0)) - au_dv
     else:
         au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
     v_au = max(0.0, au_payable_content) * g_to_oz * (au_p - au_rc)
     
-    # --- 2. 최종 정산 단가 결정 ---
-    # 광석 가치에서 제련소 비용(TC)을 뺀 것이 '정산 단가'
     net_value = (v_cu + v_ag + v_au) - tc
 
     if "Purchase" in mode:
-        return -net_value  # 비용 관점 (낮을수록 좋음 -> 마이너스 금액이 작아짐)
+        return -net_value
     else:
-        return net_value   # 수익 관점 (높을수록 좋음)
-                      
-st.info("""
-    **📢 공지사항 (Notice)**
-    * 본 계산기는 **DMT(Dry Metric Ton) 1톤**기준으로 함 """)                      
+        return net_value
 
 # --- 2. 상단 레이아웃 ---
 st.title("⚡ 동정광 Trade off 분석")
-mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
+st.info("**📢 공지사항:** 본 계산기는 **DMT 1톤** 기준이며, 실질적인 RC 절감 효과를 반영합니다.")
 
-# 최상단 결과 요약 공간 확보
+mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
 res_placeholder = st.empty()
 
-# --- 3. 입력 섹션 (공통 및 탭) ---
+# --- 3. 입력 섹션 (Key값 전면 수정 및 통일) ---
 with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
     c1, c2 = st.columns(2)
     with c1:
@@ -78,34 +66,36 @@ data = {}
 
 for i, (name, k, def_tc) in enumerate(cases):
     with tabs[i]:
-        st.markdown(f"<div class='section-head'>{name} - Metals Terms</div>", unsafe_allow_html=True)
+        st.markdown(f"**{name} - Metals Terms**")
         # Cu
         c_cu1, c_cu2, c_cu3 = st.columns(3)
-        data[f"cu_py_{k}"] = c_cu1.number_input("Cu Pay (%)", value=100.0, key=f"cp_{k}")
-        data[f"cu_dt_{k}"] = c_cu2.radio("Cu Deduct", ["PD", "MD"], horizontal=True, key=f"cdt_{k}")
-        data[f"cu_dv_{k}"] = c_cu3.number_input("Cu PD/MD Val", value=1.25, key=f"cdv_{k}")
+        data[f"cu_py_{k}"] = c_cu1.number_input("Cu Pay (%)", value=100.0, key=f"cu_py_{k}")
+        data[f"cu_dt_{k}"] = c_cu2.radio("Cu Deduct", ["PD", "MD"], horizontal=True, key=f"cu_dt_{k}")
+        data[f"cu_dv_{k}"] = c_cu3.number_input("Cu PD/MD Val", value=1.25, key=f"cu_dv_{k}")
+        
         # Ag
         st.divider()
         c_ag1, c_ag2, c_ag3 = st.columns(3)
-        # key 이름을 호출부에서 쓰는 ag_py_{k}, ag_dt_{k}, ag_dv_{k}로 통일!
         data[f"ag_py_{k}"] = c_ag1.number_input("Ag Pay (%)", value=90.0, key=f"ag_py_{k}")
         data[f"ag_dt_{k}"] = c_ag2.radio("Ag Deduct", ["PD", "MD"], horizontal=True, key=f"ag_dt_{k}")
         data[f"ag_dv_{k}"] = c_ag3.number_input("Ag PD/MD Val", value=50.0, key=f"ag_dv_{k}")
+        
         # Au
         st.divider()
         c_au1, c_au2, c_au3 = st.columns(3)
         data[f"au_py_{k}"] = c_au1.number_input("Au Pay (%)", value=90.0, key=f"au_py_{k}")
         data[f"au_dt_{k}"] = c_au2.radio("Au Deduct", ["PD", "MD"], horizontal=True, key=f"au_dt_{k}")
         data[f"au_dv_{k}"] = c_au3.number_input("Au PD/MD Val", value=1.25, key=f"au_dv_{k}")
-        # TC/RC
-        st.markdown(f"<div class='section-head'>📉 TC/RC</div>", unsafe_allow_html=True)
+        
+        # TC/RC (Key 불일치 해결: 호출부와 동일하게 맞춤)
+        st.divider()
         c_tr1, c_tr2 = st.columns(2)
         data[f"tc_{k}"] = c_tr1.number_input("TC ($/DMT)", value=def_tc, key=f"tc_{k}")
-        data[f"cu_rc_{k}"] = c_tr1.number_input("Cu RC (c/lb)", value=8.0, key=f"curc_{k}")
-        data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.4, key=f"agrc_{k}")
-        data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=5.0, key=f"aurc_{k}")
+        data[f"cu_rc_{k}"] = c_tr1.number_input("Cu RC (c/lb)", value=8.0, key=f"cu_rc_{k}")
+        data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.4, key=f"ag_rc_{k}")
+        data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=5.0, key=f"au_rc_{k}")
 
-# --- 4. Calculation (모든 입력 후 계산 수행) ---
+# --- 4. Calculation ---
 res = {}
 for _, k, _ in cases:
     res[k] = calc_unit_net(
@@ -113,43 +103,19 @@ for _, k, _ in cases:
         au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"],
         ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]
     )
-# --- 5. 결과 출력 수정 (Sidebar & Placeholder) ---
+
+# --- 5. 결과 출력 (Sidebar) ---
 with st.sidebar:
     st.markdown("---")
     st.subheader("📊 최종 계산 결과")
-    
-    # 기본 단가 표시 (절대값으로 깔끔하게 표시)
     st.metric("A (비교기준값)", f"${abs(res['a']):,.2f} /t")
     
-    # 차액 계산
     d_b = res['b'] - res['a']
     d_c = res['c'] - res['a']
-    
-    # 매입/매출 모드에 따른 시각화 로직
-    # 'Purchase' 모드일 때: 단가 하락(d < 0) = 이득(초록색)
-    # 'Sales' 모드일 때: 단가 상승(d > 0) = 이득(초록색)
     is_purchase = "Purchase" in mode
     
-    # B안 출력
-    st.metric(
-        label="B안 (vs A)", 
-        value=f"${abs(res['b']):,.2f} /t", 
-        delta=f"{d_b:,.2f}",
-        delta_color="inverse" if is_purchase else "normal"
-    )
-    
-    # C안 출력
-    st.metric(
-        label="C안 (vs A)", 
-        value=f"${abs(res['c']):,.2f} /t", 
-        delta=f"{d_c:,.2f}",
-        delta_color="inverse" if is_purchase else "normal"
-    )
-
-    # 💡 은(Ag) 변화 확인용 안내 (디버깅용)
-    if abs(d_b) < 0.001 and data.get(f'ag_dv_b', 0) != data.get(f'ag_dv_a', 0):
-        st.error("⚠️ 은(Ag) 입력값은 바뀌었으나 결과에 반영되지 않았습니다. 입력부의 'key' 이름을 확인하세요!")
-        
+    st.metric("B안 (vs A)", f"${abs(res['b']):,.2f} /t", f"{d_b:,.2f}", delta_color="inverse" if is_purchase else "normal")
+    st.metric("C안 (vs A)", f"${abs(res['c']):,.2f} /t", f"{d_c:,.2f}", delta_color="inverse" if is_purchase else "normal")
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
