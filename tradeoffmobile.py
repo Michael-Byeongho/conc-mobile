@@ -136,31 +136,31 @@ with res_placeholder:
 
 st.info("💡 불순물 및 기타 변수 제외, 금속 가격 및 payable, TRC 차이 Trade off 확인.")
 
+
 # --- 6. 협상 타겟 계산 (Break-even TC) ---
 st.markdown("---")
 st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
-# TC가 0일 때의 B안 순수 가치 (절댓값으로 취급하여 계산 오류 방지)
-val_b_no_tc = abs(calc_unit_net(
+# 1. B안의 순수 금속 가치 (TC 차감 전)
+# calc_unit_net 내부 부호 영향을 없애기 위해 abs() 사용
+val_b_raw = abs(calc_unit_net(
     mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
     au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
     ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']
 ))
 
-# A안의 순수 결과값도 절댓값으로 변환하여 비교 기반 마련
+# 2. A안의 최종 Net 가치 (절댓값)
 val_a_net = abs(res['a'])
 
-if mode == "Purchase (매입)":
-    # 매입 시: 내가 지불할 Target TC = (순수 금속 가치) - (A안에서 지불했던 순비용)
-    # 즉, A안과 똑같은 비용을 맞추기 위해 허용 가능한 B안의 TC
-    be_tc = val_b_no_tc - val_a_net
-    diff_tc = be_tc - data['tc_b'] # 목표보다 실제 TC가 낮으면 유리
-    is_favorable = diff_tc >= -0.001 # 부동소수점 오차 방지
-else:
-    # 매출 시: 내가 받을 Target TC = (순수 금속 가치) - (A안에서 받았던 순수익)
-    be_tc = val_b_no_tc - val_a_net
-    diff_tc = be_tc - data['tc_b'] # 목표보다 실제 TC가 낮으면 유리
-    is_favorable = diff_tc >= -0.001
+# 3. Target TC 산출 
+# A안과 같은 결과(Net)를 내기 위해 B안에서 허용 가능한 TC
+# 로직: (B안 순수 금속 가치) - (A안 최종 Net)
+be_tc = val_b_raw - val_a_net
+
+# 4. 유불리 판정
+# 제안된 B안의 TC(data['tc_b'])가 계산된 목표 TC(be_tc)보다 낮을수록 나에게 유리
+diff_tc = be_tc - data['tc_b']
+is_favorable = diff_tc >= -0.001 # 오차 범위 허용
 
 status_color = "#27ae60" if is_favorable else "#e74c3c"
 bg_color = "#f8fff9" if is_favorable else "#fff8f8"
@@ -179,6 +179,7 @@ st.markdown(f"""
         </p>
     </div>
 """, unsafe_allow_html=True)
+
 
 
 # --- 7. 하단 이동 버튼 ---
