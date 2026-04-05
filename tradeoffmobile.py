@@ -24,7 +24,7 @@ button[data-baseweb="tab"] { font-size: 16px !important; font-weight: bold; }
 
 # --- 1. Core Logic (기존과 동일) ---
 def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, au_p, au_a, au_py, au_rc, au_dt, au_dv, ag_p, ag_a, ag_py, ag_rc, ag_dt, ag_dv):
-    g_to_oz, lb_to_mt = 1/31.1035, 2204.62
+g_to_oz, lb_to_mt = 1/31.1035, 2204.62
 v_cu_pay = (cu_a * (cu_py/100) / 100) * (cu_p - (cu_rc/100 * lb_to_mt))
 v_ag_pay = (ag_a * (ag_py/100) * g_to_oz) * (ag_p - ag_rc)
 v_au_pay = (au_a * (au_py/100) * g_to_oz) * (au_p - au_rc)
@@ -43,15 +43,15 @@ res_area = st.container()
 
 # --- 3. 공통 변수 (접어두기) ---
 with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=False): # 모바일에서는 기본적으로 접어둠
-    c1, c2 = st.columns(2) # 모바일은 3컬럼보다 2컬럼이 한계선입니다.
+c1, c2 = st.columns(2) # 모바일은 3컬럼보다 2컬럼이 한계선입니다.
 with c1:
-    cu_p = st.number_input("Cu Price ($/MT)", value=12000.0)
-    ag_p = st.number_input("Ag Price ($/Oz)", value=70.0)
-    au_p = st.number_input("Au Price ($/Oz)", value=4500.0)
+cu_p = st.number_input("Cu Price ($/MT)", value=12000.0)
+ag_p = st.number_input("Ag Price ($/Oz)", value=70.0)
+au_p = st.number_input("Au Price ($/Oz)", value=4500.0)
 with c2:
-    cu_a = st.number_input("Cu Assay (%)", value=25.0)
-    ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
-    au_a = st.number_input("Au Assay (g/DMT)", value=10.0)
+cu_a = st.number_input("Cu Assay (%)", value=25.0)
+ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
+au_a = st.number_input("Au Assay (g/DMT)", value=10.0)
 
 # --- 4. Main Inputs (탭 UI 적용) ---
 st.markdown("### ⚖️ 조건 세부 설정")
