@@ -113,32 +113,43 @@ for _, k, _ in cases:
         au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"],
         ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]
     )
-
 # --- 5. 결과 출력 수정 (Sidebar & Placeholder) ---
 with st.sidebar:
     st.markdown("---")
     st.subheader("📊 최종 계산 결과")
     
-    # 기본 단가 표시
+    # 기본 단가 표시 (절대값으로 깔끔하게 표시)
     st.metric("A (비교기준값)", f"${abs(res['a']):,.2f} /t")
     
-    # B안 및 C안의 차액 계산
+    # 차액 계산
     d_b = res['b'] - res['a']
     d_c = res['c'] - res['a']
     
-    # 매입/매출 모드에 따른 화살표 방향 및 색상 제어
-    # Purchase 모드일 때는 단가가 낮아지는 것(d_b < 0)이 이득(Green)입니다.
-    label_b = "B안 (vs A)"
-    st.metric(label_b, f"${abs(res['b']):,.2f} /t", f"{d_b:,.2f}")
+    # 매입/매출 모드에 따른 시각화 로직
+    # 'Purchase' 모드일 때: 단가 하락(d < 0) = 이득(초록색)
+    # 'Sales' 모드일 때: 단가 상승(d > 0) = 이득(초록색)
+    is_purchase = "Purchase" in mode
     
-    label_c = "C안 (vs A)"
-    st.metric(label_c, f"${abs(res['c']):,.2f} /t", f"{d_c:,.2f}")
+    # B안 출력
+    st.metric(
+        label="B안 (vs A)", 
+        value=f"${abs(res['b']):,.2f} /t", 
+        delta=f"{d_b:,.2f}",
+        delta_color="inverse" if is_purchase else "normal"
+    )
+    
+    # C안 출력
+    st.metric(
+        label="C안 (vs A)", 
+        value=f"${abs(res['c']):,.2f} /t", 
+        delta=f"{d_c:,.2f}",
+        delta_color="inverse" if is_purchase else "normal"
+    )
 
-    # 상세 분석 (Ag 변화 확인용)
-    if abs(d_b) < 0.01 and data.get('ag_dv_b', 0) != data.get('ag_dv_a', 0):
-        st.warning("⚠️ Ag 공제량 변화가 전체 단가에 미치는 영향이 매우 미미합니다 ($0.01 미만).")
-
-
+    # 💡 은(Ag) 변화 확인용 안내 (디버깅용)
+    if abs(d_b) < 0.001 and data.get(f'ag_dv_b', 0) != data.get(f'ag_dv_a', 0):
+        st.error("⚠️ 은(Ag) 입력값은 바뀌었으나 결과에 반영되지 않았습니다. 입력부의 'key' 이름을 확인하세요!")
+        
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
