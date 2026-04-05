@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 
 # --- 0. Config & Style (모바일 최적화) ---
-# 기존 코드를 덮어쓸 때 이 설정이 파일 최상단에 "단 한 번만" 있어야 합니다.
 st.set_page_config(page_title="Trade-off & Sensitivity Tool", layout="centered")
 
 st.markdown("""
@@ -22,7 +21,6 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, au_p, au_a, 
     g_to_oz = 1 / 31.1035
     lb_to_mt = 2204.62
     
-    # 계산식 들여쓰기 4칸 통일
     v_cu_pay = (cu_a * (cu_py / 100.0) / 100.0) * (cu_p - (cu_rc / 100.0 * lb_to_mt))
     v_ag_pay = (ag_a * (ag_py / 100.0) * g_to_oz) * (ag_p - ag_rc)
     v_au_pay = (au_a * (au_py / 100.0) * g_to_oz) * (au_p - au_rc)
@@ -61,37 +59,22 @@ data = {}
 for i, (name, k, def_tc) in enumerate(cases):
     with tabs[i]:
         st.markdown(f"<div class='section-head'>{name} Payable Metals</div>", unsafe_allow_html=True)
-        
         data[f"cu_py_{k}"] = st.number_input("Cu Pay (%)", value=100.0, key=f"cp_{k}")
         c_sub1, c_sub2 = st.columns(2)
         with c_sub1: data[f"cu_dt_{k}"] = st.radio("Cu deduct", ["PD", "MD"], horizontal=True, key=f"cdt_{k}")
         with c_sub2: data[f"cu_dv_{k}"] = st.number_input("Cu PD/MD (%)", value=1.0, key=f"cdv_{k}")
         
-        if data[f"cu_py_{k}"] != 100.0:
-            be_cu = abs(data[f"cu_dv_{k}"] / (1.0 - data[f"cu_py_{k}"] / 100.0))
-            st.markdown(f"<p class='md-hint'>💡 MD 분기점: Cu {be_cu:.2f}%</p>", unsafe_allow_html=True)
-        
         st.divider()
-        
         data[f"ag_py_{k}"] = st.number_input("Ag Pay (%)", value=90.0, key=f"ap_{k}")
         c_sub3, c_sub4 = st.columns(2)
         with c_sub3: data[f"ag_dt_{k}"] = st.radio("Ag deduct", ["PD", "MD"], horizontal=True, key=f"adt_{k}")
         with c_sub4: data[f"ag_dv_{k}"] = st.number_input("Ag PD/MD(g)", value=30.0, key=f"adv_{k}")
-        
-        if data[f"ag_py_{k}"] != 100.0:
-            be_ag = abs(data[f"ag_dv_{k}"] / (1.0 - data[f"ag_py_{k}"] / 100.0))
-            st.markdown(f"<p class='md-hint'>💡 MD 분기점: Ag {be_ag:.1f}g</p>", unsafe_allow_html=True)
 
         st.divider()
-
         data[f"au_py_{k}"] = st.number_input("Au Pay (%)", value=90.0, key=f"aup_{k}")
         c_sub5, c_sub6 = st.columns(2)
         with c_sub5: data[f"au_dt_{k}"] = st.radio("Au deduct", ["PD", "MD"], horizontal=True, key=f"audt_{k}")
         with c_sub6: data[f"au_dv_{k}"] = st.number_input("Au PD/MD(g)", value=1.0, key=f"audv_{k}")
-        
-        if data[f"au_py_{k}"] != 100.0:
-            be_au = abs(data[f"au_dv_{k}"] / (1.0 - data[f"au_py_{k}"] / 100.0))
-            st.markdown(f"<p class='md-hint'>💡 MD 분기점: Au {be_au:.1f}g</p>", unsafe_allow_html=True)
         
         st.markdown(f"<div class='section-head'>📉 Deductions (TC/RC)</div>", unsafe_allow_html=True)
         c_sub7, c_sub8 = st.columns(2)
@@ -109,13 +92,13 @@ res = {k: calc_unit_net(mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], d
 
 with res_area:
     m1, m2, m3 = st.columns(3)
-    with m1: st.metric("A안(기존,Base)", f"${abs(res['a']):,.0f}/t")
-    with m2: st.metric("B안", f"${abs(res['b']):,.0f}/t", f"{res['b'] - res['a']:,.2f}")
-    with m3: st.metric("C안", f"${abs(res['c']):,.0f}/t", f"{res['c'] - res['a']:,.2f}")
+    with m1: st.metric("A안(Base)", f"${abs(res['a']):,.0f}/t")
+    with m2: st.metric("B안 델타", f"${abs(res['b']):,.0f}/t", f"{res['b'] - res['a']:,.2f}")
+    with m3: st.metric("C안 델타", f"${abs(res['c']):,.0f}/t", f"{res['c'] - res['a']:,.2f}")
 
 # --- 6. 협상 타겟 계산 ---
 st.markdown("---")
-st.markdown("### 🎯 협상 목표 계산기(payable vs TC/ AvsB)")
+st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
 net_b_no_tc = calc_unit_net(mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
                             au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
@@ -143,16 +126,16 @@ st.markdown(f"""
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {border_color};">
         <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 현재 제안(${data['tc_b']:.2f}) 분석</p>
         <p style="margin: 0; color: #34495e; font-size: 14px; line-height: 1.5;">
-            {f"❌ 목표보다 <b><span style='color:{status_color}'>${abs(diff_tc):,.2f}</span></b> 부족합니다." if not is_favorable else
-             f"✅ 목표보다 <b><span style='color:{status_color}'>${abs(diff_tc):,.2f}</span></b> 더 받아냈습니다."}
+            {"❌ 목표보다 <b><span style='color:"+status_color+"'>$"+str(round(abs(diff_tc),2))+"</span></b> 부족합니다." if not is_favorable else
+             "✅ 목표보다 <b><span style='color:"+status_color+"'>$"+str(round(abs(diff_tc),2))+"</span></b> 더 받아냈습니다."}
         </p>
     </div>
+""", unsafe_allow_html=True)
 
 # --- 7. 최상단 이동 버튼 ---
-st.markdown(
-    """
+st.markdown("""
     <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});" 
-        style="""
+        style="
             width: 100%; 
             padding: 15px; 
             background-color: #2e4053; 
@@ -168,6 +151,5 @@ st.markdown(
         ">
         ⬆️ 최상단으로 돌아가기
     </button>
-    """,
-    unsafe_allow_html=True
-)
+    """, unsafe_allow_html=True)
+
