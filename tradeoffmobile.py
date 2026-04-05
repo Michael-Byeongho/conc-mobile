@@ -107,41 +107,57 @@ for _, k, _ in cases:
 st.markdown("---")
 st.markdown("### 🎯 A안 대비 B안의 TC 조정 목표 (Gap)")
 
-# 1. 두 안의 Net 결과값 차이 (이미 TC가 포함된 최종 금액의 차이)
-# res['b'] - res['a'] 가 양수(+)라면 B안이 A안보다 유리한 상태입니다.
+# 1. 두 안의 Net 결과값 차이
 net_diff = res['b'] - res['a']
 
-# 2. 이 Gap을 메꾸기 위해 B안의 TC를 얼마나 '더' 조정해야 하는가?
-# 매입(Purchase): net = TC - Metal 이므로, B가 유리(net_diff > 0)하면 TC를 그만큼 '낮춰야' A와 같아짐
-# 매출(Sales): net = Metal - TC 이므로, B가 유리(net_diff > 0)하면 TC를 그만큼 '높여야' A와 같아짐
+# 2. Gap을 메꾸기 위한 TC 조정액 계산
 if "Purchase" in mode:
     required_tc_adj = -net_diff
 else:
     required_tc_adj = net_diff
 
-# 3. 유불리 판단
-is_favorable = net_diff >= -0.0001
-status_color = "#27ae60" if is_favorable else "#e74c3c"
-bg_color = "#f8fff9" if is_favorable else "#fff8f8"
+# 3. 상태 판별 (유리 / 동일 / 불리)
+if abs(net_diff) < 0.001:  # 동일한 경우
+    status_type = "equal"
+    status_color = "#95a5a6" # 회색
+    bg_color = "#f4f6f7"
+elif net_diff > 0:         # 유리한 경우
+    status_type = "favorable"
+    status_color = "#27ae60" # 녹색
+    bg_color = "#f8fff9"
+else:                      # 불리한 경우
+    status_type = "unfavorable"
+    status_color = "#e74c3c" # 붉은색
+    bg_color = "#fff8f8"
 
-# 4. 결과 출력
+# 4. 메시지 구성
+if status_type == "equal":
+    analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b>"
+    guide_text = "추가적인 TC 조정 없이도 A안과 같은 수익성을 유지합니다."
+elif status_type == "favorable":
+    analysis_text = f"✅ B안의 금속 조건이 유리합니다. (A안 대비 <b>+${abs(net_diff):,.2f}</b>)"
+    guide_text = f"A안과 수익을 맞추려면 TC를 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("낮춰줄(인하)" if "Purchase" in mode else "높여줄(인상)") + " 여유가 있습니다."
+else:
+    analysis_text = f"❌ B안의 금속 조건이 불리합니다. (A안 대비 <b>-${abs(net_diff):,.2f}</b>)"
+    guide_text = f"A안과 수익을 맞추려면 TC를 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("더 받아야(인상)" if "Purchase" in mode else "더 깎아야(인하)") + " 합니다."
+
+# 5. UI 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
         <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 수준의 수익을 맞추기 위한 B안의 TC 조정액</p>
         <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
-            {'+' if required_tc_adj > 0 else ''}{required_tc_adj:,.2f} $/mt
+            {'+' if required_tc_adj > 0.001 else ''}{required_tc_adj:,.2f} $/mt
         </p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 협상 가이드</p>
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 분석 결과</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {"✅ B안의 금속 조건이 유리합니다. A안과 동일한 수익을 보려면 TC를 <b>$" + f"{abs(required_tc_adj):,.2f}" + "</b> 만큼 " + ("낮춰줄(인하)" if "Purchase" in mode else "높여줄(인상)") + " 여유가 있습니다." if is_favorable else 
-             "❌ B안의 금속 조건이 불리합니다. A안과 동일한 수익을 보려면 TC를 <b>$" + f"{abs(required_tc_adj):,.2f}" + "</b> 만큼 " + ("더 받아야(인상)" if "Purchase" in mode else "더 깎아야(인하)") + " 합니다."}
+            {analysis_text}<br>
+            <span style="font-size: 13px; color: #7f8c8d;">{guide_text}</span>
         </p>
     </div>
 """, unsafe_allow_html=True)
-
 
 # --- 7. 하단 이동 버튼 ---
 st.markdown(f"""
