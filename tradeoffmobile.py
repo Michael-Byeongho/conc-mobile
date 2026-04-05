@@ -134,7 +134,7 @@ with res_placeholder:
         </div>
     """, unsafe_allow_html=True)
 
-st.info("💡 이제 상단 대시보드에서 실시간 가치 변화를 확인할 수 있습니다.")
+st.info("💡 불순물 및 기타 변수 제외, 금속 가격 및 payable, TRC 차이 Trade off 확인.")
 
 # --- 6. 협상 타겟 계산 (Break-even TC) ---
 st.markdown("---")
