@@ -140,34 +140,27 @@ st.info("💡 불순물 및 기타 변수 제외, 금속 가격 및 payable, TRC
 st.markdown("---")
 st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
-# TC가 0일 때의 B안 가치 계산 (Target TC 산출용)
-val_b_no_tc = calc_unit_net(mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
-                            au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
-                            ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b'])
-# --- 6. 협상 타겟 계산 (Break-even TC) ---
-st.markdown("---")
-st.markdown("### 🎯 협상 목표 계산 (A vs B)")
-
-# TC가 0일 때의 B안 가치 계산 (순수 금속 가치 산출용)
-val_b_no_tc = calc_unit_net(
+# TC가 0일 때의 B안 순수 가치 (절댓값으로 취급하여 계산 오류 방지)
+val_b_no_tc = abs(calc_unit_net(
     mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
     au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
     ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']
-)
+))
 
-# Target TC: A안의 결과값(res['a'])과 B안이 같아지기 위해 필요한 B안의 TC 값
+# A안의 순수 결과값도 절댓값으로 변환하여 비교 기반 마련
+val_a_net = abs(res['a'])
+
 if mode == "Purchase (매입)":
-    # 매입 시: Net = TC - Value (값이 클수록 나에게 불리/비용 발생)
-    # Target TC = A_Net + B_Value_no_TC (abs 사용으로 부호 정렬)
-    be_tc = res['a'] + abs(val_b_no_tc)
-    diff_tc = data['tc_b'] - be_tc  # 내가 내는 TC가 목표보다 작아야 유리
-    is_favorable = diff_tc <= 0
+    # 매입 시: 내가 지불할 Target TC = (순수 금속 가치) - (A안에서 지불했던 순비용)
+    # 즉, A안과 똑같은 비용을 맞추기 위해 허용 가능한 B안의 TC
+    be_tc = val_b_no_tc - val_a_net
+    diff_tc = be_tc - data['tc_b'] # 목표보다 실제 TC가 낮으면 유리
+    is_favorable = diff_tc >= -0.001 # 부동소수점 오차 방지
 else:
-    # 매출 시: Net = Value - TC (값이 클수록 나에게 유리/수익 발생)
-    # Target TC = B_Value_no_TC - A_Net
-    be_tc = abs(val_b_no_tc) - res['a']
-    diff_tc = be_tc - data['tc_b']  # 상대가 깎는 TC가 목표보다 작아야 유리
-    is_favorable = diff_tc <= 0
+    # 매출 시: 내가 받을 Target TC = (순수 금속 가치) - (A안에서 받았던 순수익)
+    be_tc = val_b_no_tc - val_a_net
+    diff_tc = be_tc - data['tc_b'] # 목표보다 실제 TC가 낮으면 유리
+    is_favorable = diff_tc >= -0.001
 
 status_color = "#27ae60" if is_favorable else "#e74c3c"
 bg_color = "#f8fff9" if is_favorable else "#fff8f8"
@@ -181,11 +174,13 @@ st.markdown(f"""
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
         <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 제안 분석</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {"✅ 현재 제안된 TC가 목표 대비 <b>$"+f"{abs(diff_tc):,.2f}"+"</b> 우수합니다." if is_favorable else 
-             "❌ 현재 제안된 TC가 목표 대비 <b>$"+f"{abs(diff_tc):,.2f}"+"</b> 불리합니다."}
+            {f"✅ 현재 제안이 목표 대비 <b>${abs(diff_tc):,.2f}</b> 우수합니다." if is_favorable else 
+             f"❌ 현재 제안이 목표 대비 <b>${abs(diff_tc):,.2f}</b> 불리합니다."}
         </p>
     </div>
 """, unsafe_allow_html=True)
+
+
 # --- 7. 하단 이동 버튼 ---
 st.markdown(f"""
     <a href="#link_to_top" style="text-decoration: none;">
