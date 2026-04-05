@@ -1,5 +1,5 @@
 import streamlit as st
-
+st.markdown("<div id='link_to_top' name='link_to_top'></div>", unsafe_allow_html=True)
 # --- 0. Config & Style ---
 st.set_page_config(page_title="Trade-off & Sensitivity Tool", layout="centered")
 
@@ -10,8 +10,6 @@ st.markdown("""
         .section-head { background-color: #2e4053; color: white !important; padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
-
-st.markdown("<div id='top'></div>", unsafe_allow_html=True)
 
 # --- 1. Core Logic (부호 체계 정립: 가치(+), 비용(-)) ---
 def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
@@ -202,7 +200,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-
+#7. 상단이동
 st.markdown("""
     <style>
         .top-link {
@@ -217,11 +215,10 @@ st.markdown("""
             text-align: center;
             margin-top: 30px;
             text-decoration: none;
-            cursor: pointer;
         }
         .top-link:hover { background-color: #3e5871; }
     </style>
-    <a onclick="window.parent.document.querySelector('.main').scrollTo(0,0);" class="top-link">
+    <a href="#link_to_top" target="_self" class="top-link">
         ⬆️ 최상단으로 돌아가기
     </a>
 """, unsafe_allow_html=True)
