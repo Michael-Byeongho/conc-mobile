@@ -103,85 +103,41 @@ for _, k, _ in cases:
         ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]
     )
 
-# --- 6. 최상단 '빈 공간'에 결과 채우기 ---
-d_b = res['b'] - res['a']
-d_c = res['c'] - res['a']
-
-with res_placeholder:
-    st.markdown(f"""
-        <div style="margin-top: 10px; margin-bottom: 20px;">
-            <p style="font-weight: bold; margin-bottom: 5px;">📊 분석 결과 요약</p>
-            <div style="display: flex; justify-content: space-between; gap: 10px;">
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">A안 (Base)</div>
-                    <div style="font-size:22px; font-weight:bold;">${abs(res['a']):,.2f}</div>
-                </div>
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">B안</div>
-                    <div style="font-size:22px; font-weight:bold;">${abs(res['b']):,.2f}</div>
-                    <div style="font-size:14px; font-weight:bold; color:{'green' if d_b > 0 else 'red'}">
-                        {'▲' if d_b > 0 else '▼'} {abs(d_b):,.2f}
-                    </div>
-                </div>
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">C안</div>
-                    <div style="font-size:22px; font-weight:bold;">${abs(res['c']):,.2f}</div>
-                    <div style="font-size:14px; font-weight:bold; color:{'green' if d_c > 0 else 'red'}">
-                        {'▲' if d_c > 0 else '▼'} {abs(d_c):,.2f}
-                    </div>
-                </div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-st.info("💡 불순물 및 기타 변수 제외, 금속 가격 및 payable, TRC 차이 Trade off 확인.")
-
-# --- 6. 협상 타겟 계산 (Break-even TC) ---
+# --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
-st.markdown("### 🎯 협상 목표 계산 (A vs B)")
+st.markdown("### 🎯 A안 대비 B안의 조건 차이 (TC 환산)")
 
-# 1. 현재 두 안의 최종 정산 결과 (Net $)
-# calc_unit_net 결과값은 매입 시 음수(-), 매출 시 양수(+)로 이미 방향성이 반영되어 있음
-net_a = res['a']
-net_b = res['b']
+# 1. B안에서 TC만 0으로 만들었을 때의 Net value를 구합니다. (순수 금속 조건 가치)
+net_b_zero_tc = calc_unit_net(
+    mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
+    au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
+    ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']
+)
 
-# 2. Gap(차이) 계산
-# B안이 A안보다 얼마나 더 유리/불리한지 계산
-# gap > 0 이면 B안이 수익이 더 크거나(매출), 비용이 더 적은(매입) 상태
-gap = net_b - net_a
+# 2. A안의 최종 결과(TC가 포함된 기준점)와 비교합니다.
+# A안과 B안의 조건이 똑같다면, (net_b_zero_tc - 30) - net_a = 0 이 됩니다.
+# 여기서 구하고 싶은 것은 "B안의 조건이 A안보다 TC 기준 몇 불 이득인가?" 입니다.
+tc_benefit = net_b_zero_tc - res['a']
 
-# 3. Target TC 계산
-# [공통] TC는 Net 값을 낮추는 '비용' 요소입니다.
-# B안이 A안과 똑같아지려면, 현재의 Net 차이(gap)만큼 TC를 조정해야 합니다.
-# 즉, B안의 수익이 A보다 높다면(gap > 0), TC를 그만큼 더 받아야(높여야) A와 같아집니다.
-be_tc = data['tc_b'] + gap
-
-# 4. 유불리 분석 및 UI 메시지
-# 매입(Purchase): Net 값이 작을수록(음수 절대값이 작을수록) 유리 -> net_b >= net_a 가 유리
-# 매출(Sales): Net 값이 클수록(양수 절대값이 클수록) 유리 -> net_b >= net_a 가 유리
-# 결론적으로 gap(net_b - net_a) >= 0 이면 B안이 유리한 조건임
-
-is_favorable = gap >= -0.0001
+# 3. 유불리 분석 (Gap 기준)
+# tc_benefit이 0보다 크면 B안의 금속 조건이 A안보다 그만큼 유리하다는 뜻입니다.
+is_favorable = tc_benefit >= -0.0001
 status_color = "#27ae60" if is_favorable else "#e74c3c"
 bg_color = "#f8fff9" if is_favorable else "#fff8f8"
 
-# 포지션별 메시지 최적화
-if mode == "Purchase (매입)":
-    analysis_text = f"현재 B안이 A안보다 지불 금액이 <b>${abs(gap):,.2f}</b> " + ("적어 유리합니다." if is_favorable else "많아 불리합니다.")
-else:
-    analysis_text = f"현재 B안이 A안보다 수령 금액이 <b>${abs(gap):,.2f}</b> " + ("많아 유리합니다." if is_favorable else "적어 불리합니다.")
-
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">🎯 A안과 동일한 수익성을 갖기 위한 B안의 목표 TC</p>
-        <p style="margin: 5px 0; color: #2c3e50; font-size: 28px; font-weight: 800;">${be_tc:,.2f}</p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 대비 B안의 조건 유리도 (TC 환산)</p>
+        <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
+            {'+' if tc_benefit > 0 else ''}{tc_benefit:,.2f} $/mt
+        </p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 제안 분석 (vs A안 Base)</p>
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 분석 결과</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {analysis_text}<br>
-            <span style="font-size: 12px; color: #7f8c8d;">(상기 목표 TC보다 B안의 TC를 더 <b>{'높게' if mode == "Purchase (매입)" else '낮게'}</b> 협상해야 유리해집니다.)</span>
+            {"✅ B안의 금속 정산 조건이 A안보다 유리하여, TC를 <b>$" + f"{abs(tc_benefit):,.2f}" + "</b> 더 많이 받아낼 수 있는 여유가 있습니다." if is_favorable else 
+             "❌ B안의 금속 정산 조건이 A안보다 불리하여, A안과 맞추려면 TC를 <b>$" + f"{abs(tc_benefit):,.2f}" + "</b> 더 깎아야 합니다."}
         </p>
     </div>
 """, unsafe_allow_html=True)
