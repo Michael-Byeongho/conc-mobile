@@ -31,12 +31,23 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     # 가치 = (지불비율 * 가격) - (지불비율 * RC * lb환산)
     v_cu_pay = (cu_payable_ratio * cu_p) - (max(0, cu_payable_ratio) * (cu_rc / 100.0 * lb_to_mt))
     
-    # 2. Ag 가치 (은 20g PD 차이 = $45.01 보장)
+  # 2. Ag 가치 (지불 금속량에 비례하여 RC 차감)
     if ag_dt == "PD":
         ag_payable_content = (ag_a * (ag_py / 100.0)) - ag_dv
     else:
         ag_payable_content = ag_a * (ag_py / 100.0 - ag_dv / 100.0)
-    v_ag_pay = (ag_payable_content * g_to_oz * ag_p) - (max(0, ag_payable_content) * g_to_oz * ag_rc)
+    
+    # 가치 = (지불량 * Oz환산 * 가격) - (지불량 * Oz환산 * RC)
+    # 지불량이 줄어들면 뒤쪽의 RC 차감액도 함께 줄어듭니다.
+    v_ag_pay = (max(0, ag_payable_content) * g_to_oz * ag_p) - (max(0, ag_payable_content) * g_to_oz * ag_rc)
+    
+    # 3. Au 가치 (지불 금속량에 비례하여 RC 차감)
+    if au_dt == "PD":
+        au_payable_content = (au_a * (au_py / 100.0)) - au_dv
+    else:
+        au_payable_content = au_a * (au_py / 100.0 - au_dv / 100.0)
+        
+    v_au_pay = (max(0, au_payable_content) * g_to_oz * au_p) - (max(0, au_payable_content) * g_to_oz * au_rc)
     
     # 3. Au 가치
     if au_dt == "PD":
