@@ -89,7 +89,6 @@ for i, (name, k, def_tc) in enumerate(cases):
         with c_sub8:
             data[f"ag_rc_{k}"] = st.number_input("Ag RC($/oz)", value=0.5, key=f"agrc_{k}")
             data[f"au_rc_{k}"] = st.number_input("Au RC($/oz)", value=5.0, key=f"aurc_{k}")
-
 # --- 5. Calculation (수정된 부분) ---
 with res_area:
     # 델타 포맷팅 함수 (색상 강제 적용 및 가시성 개선)
@@ -159,7 +158,6 @@ with res_area:
             </div>
         </div>
     """, unsafe_allow_html=True)
-
 
 
 # --- 6. 협상 타겟 계산 ---
