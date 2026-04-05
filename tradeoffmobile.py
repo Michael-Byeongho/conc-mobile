@@ -89,49 +89,58 @@ for i, (name, k, def_tc) in enumerate(cases):
         with c_sub8:
             data[f"ag_rc_{k}"] = st.number_input("Ag RC($/oz)", value=0.5, key=f"agrc_{k}")
             data[f"au_rc_{k}"] = st.number_input("Au RC($/oz)", value=5.0, key=f"aurc_{k}")
-# --- 5. Calculation (수정된 부분) ---
+
+# --- 5. Calculation ---
+# --- 5. Calculation (로직 동일) ---
+res = {k: calc_unit_net(mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
+                        au_p, au_a, data[f"au_py_{k}"], data[f"au_rc_{k}"], data[f"au_dt_{k}"], data[f"au_dv_{k}"],
+                        ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]) for _, k, _ in cases}
+
+# 미리 예약해둔 최상단 res_area에 결과 출력 (반응형 커스텀 카드 적용)
 with res_area:
-    # 델타 포맷팅 함수 (색상 강제 적용 및 가시성 개선)
+   # 델타 포맷팅 함수 (배경색 추가 + 강제 색상 적용)
     def get_delta_html(delta_val):
         if delta_val > 0:
-            # 양수일 때: 초록색 텍스트 (#1e8449)
-            return f"<span style='color: #1e8449 !important; background-color: #e8f8f5 !important; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: clamp(10px, 3vw, 12px); display: inline-block;'>▲ {delta_val:,.2f}</span>"
+            return f"<span style='color: #1e8449 !important; background-color: #e8f8f5 !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>↑ {delta_val:,.2f}</span>"
         elif delta_val < 0:
-            # 음수일 때: 붉은색 텍스트 (#c0392b)
-            return f"<span style='color: #c0392b !important; background-color: #fdedec !important; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: clamp(10px, 3vw, 12px); display: inline-block;'>▼ {abs(delta_val):,.2f}</span>"
+            return f"<span style='color: #c0392b !important; background-color: #fdedec !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>↓ {abs(delta_val):,.2f}</span>"
         else:
-            # 변동 없을 때: 회색
-            return f"<span style='color: #7f8c8d !important; background-color: #f2f4f4 !important; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: clamp(10px, 3vw, 12px); display: inline-block;'>- 0.00</span>"
+            return f"<span style='color: #7f8c8d !important; background-color: #f2f4f4 !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>- 0.00</span>"
+
+    d_b = res['b'] - res['a']
+    d_c = res['c'] - res['a']
+
+    # 모바일 강제 가로 배열 및 반응형 폰트(clamp) 적용 HTML
     st.markdown(f"""
         <style>
             .flex-container {{
                 display: flex;
                 justify-content: space-between;
-                gap: 8px;
+                gap: 8px; /* 카드 사이 간격 */
                 width: 100%;
                 margin-bottom: 20px;
             }}
             .flex-card {{
-                flex: 1;
+                flex: 1; /* 3개가 동일한 비율로 꽉 차게 */
                 background-color: #f8f9fa;
                 padding: 10px 5px;
                 border-radius: 8px;
                 border-left: 4px solid #2e4053;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                 text-align: center;
-                min-width: 0; /* flexbox 내 텍스트 잘림 방지 */
+                overflow: hidden; /* 글자가 넘치면 잘리도록 (레이아웃 보호) */
             }}
             .card-title {{
-                color: #7f8c8d !important;
-                font-size: clamp(10px, 2.8vw, 14px);
+                color: #7f8c8d;
+                font-size: clamp(10px, 2.8vw, 14px); /* 화면 폭에 따라 10px ~ 14px 자동 조절 */
                 margin-bottom: 4px;
                 white-space: nowrap;
             }}
             .card-value {{
-                color: #2c3e50 !important;
+                color: #2c3e50;
                 font-weight: 900;
-                font-size: clamp(14px, 4.5vw, 22px);
-                margin-bottom: 5px;
+                font-size: clamp(14px, 4.5vw, 24px); /* 화면 폭에 따라 14px ~ 24px 자동 조절 */
+                margin-bottom: 2px;
                 letter-spacing: -0.5px;
             }}
         </style>
@@ -139,22 +148,21 @@ with res_area:
         <div class="flex-container">
             <div class="flex-card">
                 <div class="card-title">A안(원안)</div>
-                <div class="card-value">${abs(res['a']):,.0f}</div>
+                <div class="card-value">${abs(res['a']):,.0f}/t</div>
                 <div style='font-size: clamp(10px, 3vw, 13px); color: transparent;'>-</div>
             </div>
             <div class="flex-card">
                 <div class="card-title">B안</div>
-                <div class="card-value">${abs(res['b']):,.0f}</div>
+                <div class="card-value">${abs(res['b']):,.0f}/t</div>
                 {get_delta_html(d_b)}
             </div>
             <div class="flex-card">
                 <div class="card-title">C안</div>
-                <div class="card-value">${abs(res['c']):,.0f}</div>
+                <div class="card-value">${abs(res['c']):,.0f}/t</div>
                 {get_delta_html(d_c)}
             </div>
         </div>
     """, unsafe_allow_html=True)
-
 
 # --- 6. 협상 타겟 계산 ---
 st.markdown("---")
