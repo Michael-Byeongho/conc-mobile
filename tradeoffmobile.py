@@ -33,6 +33,7 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, au_p, au_a, 
     return -net if mode == "Purchase (매입)" else net
 
 # --- 2. 최상단 대시보드 ---
+st.markdown("<div id='link_to_top'></div>", unsafe_allow_html=True)
 st.title("⚡ 동정광 Trade off 분석")
 mode = st.radio("🔄 거래 포지션", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
 
