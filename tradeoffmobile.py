@@ -54,10 +54,7 @@ def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv,
     return (v_cu_pay + v_ag_pay + v_au_pay) - tc
 st.info("""
     **📢 공지사항 (Notice)**
-    * 본 계산기는 **DMT(Dry Metric Ton) 1톤**을 기준으로 산출됩니다.
-    * **RC(Refining Charge)**는 품위(Assay) 기준으로 고정하여 Metal Term 변경에 따른 왜곡을 방지했습니다.
-    * 모든 통화 단위는 **USD ($)** 기준입니다.
-""")                      
+    * 본 계산기는 **DMT(Dry Metric Ton) 1톤**기준으로 함 """)                      
 
 # --- 2. 상단 레이아웃 ---
 st.title("⚡ 동정광 Trade off 분석")
