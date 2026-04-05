@@ -161,10 +161,26 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 7. 하단 이동 버튼 ---
-st.markdown(f"""
-    <a href="#link_to_top" style="text-decoration: none;">
-        <div style="width: 100%; padding: 15px; background-color: #2e4053; color: white; border-radius: 10px; font-size: 16px; font-weight: bold; text-align: center; margin-top: 30px;">
-            ⬆️ 최상단으로 돌아가기
-        </div>
+st.markdown("""
+    <style>
+        .top-button {
+            width: 100%; 
+            padding: 15px; 
+            background-color: #2e4053; 
+            color: white !important; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            text-align: center; 
+            margin-top: 30px;
+            display: block;
+            text-decoration: none;
+        }
+        .top-button:hover {
+            background-color: #3e5871;
+        }
+    </style>
+    <a href="#top" class="top-button">
+        ⬆️ 최상단으로 돌아가기
     </a>
 """, unsafe_allow_html=True)
