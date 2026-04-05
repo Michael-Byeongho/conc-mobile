@@ -344,3 +344,53 @@ st.markdown(f"""
         </div>
     </a>
 """, unsafe_allow_html=True)
+
+
+
+# --- 6. 협상 타겟 계산 (Break-even TC) ---
+st.markdown("---")
+st.markdown("### 🎯 협상 목표 계산 (A vs B)")
+
+# TC가 0일 때의 B안 가치 계산 (Target TC 산출용)
+val_b_no_tc = calc_unit_net(mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
+                            au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
+                            ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b'])
+
+# Target TC: A안의 Net과 같아지게 만드는 B안의 TC 값
+if mode == "Purchase (매입)":
+    # 매입 시: Net = -(Value - TC) = TC - Value.  Target TC = A_Net + B_Value
+    be_tc = res['a'] + abs(val_b_no_tc) 
+    diff_tc = be_tc - data['tc_b']
+    is_favorable = diff_tc <= 0 
+else:
+    # 매출 시: Net = Value - TC. Target TC = B_Value - A_Net
+    be_tc = abs(val_b_no_tc) - res['a']
+    diff_tc = data['tc_b'] - be_tc
+    is_favorable = diff_tc >= 0
+
+status_color = "#27ae60" if is_favorable else "#e74c3c"
+bg_color = "#f8fff9" if is_favorable else "#fff8f8"
+
+st.markdown(f"""
+    <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">🎯 목표 TC (Target TC)</p>
+        <p style="margin: 5px 0; color: #2c3e50; font-size: 28px; font-weight: 800;">${be_tc:,.2f}</p>
+        <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
+    </div>
+    <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 제안 분석</p>
+        <p style="margin: 0; color: #34495e; font-size: 14px;">
+            {"✅ 현재 제안이 목표보다 <b>$"+f"{abs(diff_tc):,.2f}"+"</b> 우수합니다." if is_favorable else 
+             "❌ 현재 제안이 목표보다 <b>$"+f"{abs(diff_tc):,.2f}"+"</b> 불리합니다."}
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
+# --- 7. 하단 이동 버튼 ---
+st.markdown(f"""
+    <a href="#link_to_top" style="text-decoration: none;">
+        <div style="width: 100%; padding: 15px; background-color: #2e4053; color: white; border-radius: 10px; font-size: 16px; font-weight: bold; text-align: center; margin-top: 30px;">
+            ⬆️ 최상단으로 돌아가기
+        </div>
+    </a>
+""", unsafe_allow_html=True)
