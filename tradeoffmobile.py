@@ -141,43 +141,49 @@ st.info("💡 불순물 및 기타 변수 제외, 금속 가격 및 payable, TRC
 st.markdown("---")
 st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
-# 1. B안의 조건(Pay%, RC 등)은 유지하되 TC만 0일 때의 순수 금속 가치 ($)
-# calc_unit_net이 매입 시 음수를 반환하므로 abs()로 순수 가치만 추출
-val_b_pure_metal = abs(calc_unit_net(
-    mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
-    au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
-    ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']
-))
+# 1. 현재 두 안의 정산 결과 차이 (Gap) 계산
+# res['a'], res['b']는 이미 calc_unit_net을 통해 나온 최종 Net $ (TC 포함)
+net_a = res['a']
+net_b = res['b']
 
-# 2. A안의 최종 결과값 (Net $) - 우리가 도달해야 할 목표 지점
-# 역시 abs()를 통해 '정산되는 금액' 그 자체를 기준으로 잡음
-target_net_from_a = abs(res['a'])
+# B안이 A안과 같아지기 위해 조정해야 할 금액 (Gap)
+# gap > 0 이면 B안이 A안보다 돈을 더 많이 주거나 받는 상황
+gap = net_b - net_a
 
-# 3. Target TC 계산
-# [매입] 모드: (B안 금속 가치) - (내가 지불할 목표 금액) = 내가 깎아야 할 TC
-# [매출] 모드: (B안 금속 가치) - (내가 받을 목표 금액) = 상대가 깎을 TC
-# 결론적으로 두 모드 모두 수식은 동일함: be_tc = val_b_pure_metal - target_net_from_a
-be_tc = val_b_pure_metal - target_net_from_a
+# 2. Target TC 계산
+# [매입/매출 공통] TC는 비용(Cost) 성격이므로, 
+# B안의 결과값이 A안보다 높다면(gap > 0), 그만큼 TC를 더 높여야(B안의 Net을 깎아야) A와 같아짐
+be_tc = data['tc_b'] + gap
 
-# 4. 유불리 분석
-# 실제 B안에 입력된 TC(data['tc_b'])가 우리가 계산한 목표 TC(be_tc)보다 낮아야 유리함
-diff_tc = be_tc - data['tc_b']
-is_favorable = diff_tc >= -0.0001
+# 3. 유불리 분석 및 메시지 구성
+# 매입(Purchase)일 때: B안의 Net이 A안보다 작아야(gap < 0) 유리함 = 내가 돈을 적게 주니까
+# 매출(Sales)일 때: B안의 Net이 A안보다 커야(gap > 0) 유리함 = 내가 돈을 많이 받으니까
+
+if mode == "Purchase":
+    is_favorable = net_b <= net_a  # 적게 지불할수록 유리
+    diff_val = abs(gap)
+    status_msg = f"✅ B안이 A안보다 <b>${diff_val:,.2f}</b> 적게 지불하므로 유리합니다." if is_favorable else \
+                 f"❌ B안이 A안보다 <b>${diff_val:,.2f}</b> 더 많이 지불하므로 불리합니다."
+else:  # Sales
+    is_favorable = net_b >= net_a  # 많이 받을수록 유리
+    diff_val = abs(gap)
+    status_msg = f"✅ B안이 A안보다 <b>${diff_val:,.2f}</b> 더 많이 받으므로 유리합니다." if is_favorable else \
+                 f"❌ B안이 A안보다 <b>${diff_val:,.2f}</b> 적게 받으므로 불리합니다."
 
 status_color = "#27ae60" if is_favorable else "#e74c3c"
 bg_color = "#f8fff9" if is_favorable else "#fff8f8"
 
+# UI 출력 (HTML 부분은 동일, 변수만 매칭)
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">🎯 목표 TC (Target TC)</p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">🎯 A안과 동일해지기 위한 B안의 목표 TC</p>
         <p style="margin: 5px 0; color: #2c3e50; font-size: 28px; font-weight: 800;">${be_tc:,.2f}</p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 제안 분석</p>
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 A안 대비 B안 분석</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {f"✅ 현재 제안된 TC가 목표보다 <b>${abs(diff_tc):,.2f}</b> 낮아 유리합니다." if is_favorable else 
-             f"❌ 현재 제안된 TC가 목표보다 <b>${abs(diff_tc):,.2f}</b> 높아 불리합니다."}
+            {status_msg}
         </p>
     </div>
 """, unsafe_allow_html=True)
