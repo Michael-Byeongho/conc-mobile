@@ -144,18 +144,30 @@ st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 val_b_no_tc = calc_unit_net(mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
                             au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
                             ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b'])
+# --- 6. 협상 타겟 계산 (Break-even TC) ---
+st.markdown("---")
+st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
-# Target TC: A안의 Net과 같아지게 만드는 B안의 TC 값
+# TC가 0일 때의 B안 가치 계산 (순수 금속 가치 산출용)
+val_b_no_tc = calc_unit_net(
+    mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
+    au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
+    ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']
+)
+
+# Target TC: A안의 결과값(res['a'])과 B안이 같아지기 위해 필요한 B안의 TC 값
 if mode == "Purchase (매입)":
-    # 매입 시: Net = -(Value - TC) = TC - Value.  Target TC = A_Net + B_Value
-    be_tc = res['a'] + abs(val_b_no_tc) 
-    diff_tc = be_tc - data['tc_b']
-    is_favorable = diff_tc <= 0 
+    # 매입 시: Net = TC - Value (값이 클수록 나에게 불리/비용 발생)
+    # Target TC = A_Net + B_Value_no_TC (abs 사용으로 부호 정렬)
+    be_tc = res['a'] + abs(val_b_no_tc)
+    diff_tc = data['tc_b'] - be_tc  # 내가 내는 TC가 목표보다 작아야 유리
+    is_favorable = diff_tc <= 0
 else:
-    # 매출 시: Net = Value - TC. Target TC = B_Value - A_Net
+    # 매출 시: Net = Value - TC (값이 클수록 나에게 유리/수익 발생)
+    # Target TC = B_Value_no_TC - A_Net
     be_tc = abs(val_b_no_tc) - res['a']
-    diff_tc = data['tc_b'] - be_tc
-    is_favorable = diff_tc >= 0
+    diff_tc = be_tc - data['tc_b']  # 상대가 깎는 TC가 목표보다 작아야 유리
+    is_favorable = diff_tc <= 0
 
 status_color = "#27ae60" if is_favorable else "#e74c3c"
 bg_color = "#f8fff9" if is_favorable else "#fff8f8"
@@ -169,12 +181,11 @@ st.markdown(f"""
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
         <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 제안 분석</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {"✅ 현재 제안이 목표보다 <b>$"+f"{abs(diff_tc):,.2f}"+"</b> 우수합니다." if is_favorable else 
-             "❌ 현재 제안이 목표보다 <b>$"+f"{abs(diff_tc):,.2f}"+"</b> 불리합니다."}
+            {"✅ 현재 제안된 TC가 목표 대비 <b>$"+f"{abs(diff_tc):,.2f}"+"</b> 우수합니다." if is_favorable else 
+             "❌ 현재 제안된 TC가 목표 대비 <b>$"+f"{abs(diff_tc):,.2f}"+"</b> 불리합니다."}
         </p>
     </div>
 """, unsafe_allow_html=True)
-
 # --- 7. 하단 이동 버튼 ---
 st.markdown(f"""
     <a href="#link_to_top" style="text-decoration: none;">
