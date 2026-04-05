@@ -201,7 +201,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
-# --- 7. 하단 이동 버튼 ---
 st.markdown("""
     <style>
         .top-link {
@@ -216,10 +215,11 @@ st.markdown("""
             text-align: center;
             margin-top: 30px;
             text-decoration: none;
+            cursor: pointer;
         }
         .top-link:hover { background-color: #3e5871; }
     </style>
-    <a href="#top" class="top-link">
+    <a onclick="window.parent.document.querySelector('.main').scrollTo(0,0);" class="top-link">
         ⬆️ 최상단으로 돌아가기
     </a>
 """, unsafe_allow_html=True)
