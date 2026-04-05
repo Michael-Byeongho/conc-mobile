@@ -148,9 +148,7 @@ st.markdown(f"""
         </p>
     </div>
 
-
-
-    # --- 7. 최상단 이동 버튼 ---
+# --- 7. 최상단 이동 버튼 ---
 st.markdown(
     """
     <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});" 
@@ -173,5 +171,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-""", unsafe_allow_html=True)
