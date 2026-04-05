@@ -105,7 +105,7 @@ for _, k, _ in cases:
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
-st.markdown("### 🎯 A안 대비 B안의 TC 조정 목표 (Gap)")
+st.markdown("### 🎯 A안 대비 B안 비교 및 조정 목표 (Gap)")
 
 # 1. 두 안의 Net 결과값 차이
 net_diff = res['b'] - res['a']
@@ -136,15 +136,15 @@ if status_type == "equal":
     guide_text = "추가적인 TC 조정 없이도 A안과 같은 수익성을 유지합니다."
 elif status_type == "favorable":
     analysis_text = f"✅ B안의 금속 조건이 유리합니다. (A안 대비 <b>+${abs(net_diff):,.2f}</b>)"
-    guide_text = f"A안과 수익을 맞추려면 TC를 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("낮춰줄(인하)" if "Purchase" in mode else "높여줄(인상)") + " 여유가 있습니다."
+    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("낮춰줄(인하)" if "Purchase" in mode else "높여줄(인상)") + " 여유가 있습니다."
 else:
     analysis_text = f"❌ B안의 금속 조건이 불리합니다. (A안 대비 <b>-${abs(net_diff):,.2f}</b>)"
-    guide_text = f"A안과 수익을 맞추려면 TC를 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("더 받아야(인상)" if "Purchase" in mode else "더 깎아야(인하)") + " 합니다."
+    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("더 받아야(인상)" if "Purchase" in mode else "더 깎아야(인하)") + " 합니다."
 
 # 5. UI 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 수준의 수익을 맞추기 위한 B안의 TC 조정액</p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 수준의 수익을 맞추기 위한 B안의 조정가능(필요)액</p>
         <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
             {'+' if required_tc_adj > 0.001 else ''}{required_tc_adj:,.2f} $/mt
         </p>
