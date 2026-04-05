@@ -94,14 +94,14 @@ res = {k: calc_unit_net(mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], d
 
 # 미리 예약해둔 최상단 res_area에 결과 출력 (반응형 커스텀 카드 적용)
 with res_area:
-    # 델타 포맷팅 함수
+   # 델타 포맷팅 함수 (배경색 추가 + 강제 색상 적용)
     def get_delta_html(delta_val):
         if delta_val > 0:
-            return f"<span style='color: #27ae60; font-weight: bold; font-size: clamp(10px, 3vw, 13px);'>↑ {delta_val:,.2f}</span>"
+            return f"<span style='color: #1e8449 !important; background-color: #e8f8f5 !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>↑ {delta_val:,.2f}</span>"
         elif delta_val < 0:
-            return f"<span style='color: #e74c3c; font-weight: bold; font-size: clamp(10px, 3vw, 13px);'>↓ {abs(delta_val):,.2f}</span>"
+            return f"<span style='color: #c0392b !important; background-color: #fdedec !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>↓ {abs(delta_val):,.2f}</span>"
         else:
-            return f"<span style='color: #7f8c8d; font-weight: bold; font-size: clamp(10px, 3vw, 13px);'>- 0.00</span>"
+            return f"<span style='color: #7f8c8d !important; background-color: #f2f4f4 !important; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: clamp(10px, 3vw, 12px);'>- 0.00</span>"
 
     d_b = res['b'] - res['a']
     d_c = res['c'] - res['a']
