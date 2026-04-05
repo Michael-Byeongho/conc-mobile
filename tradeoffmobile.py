@@ -59,16 +59,16 @@ with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
     c1, c2 = st.columns(2)
     with c1:
         cu_p = st.number_input("Cu Price ($/MT)", value=12000.0)
-        ag_p = st.number_input("Ag Price ($/Oz)", value=30.0)
-        au_p = st.number_input("Au Price ($/Oz)", value=2500.0)
+        ag_p = st.number_input("Ag Price ($/Oz)", value=70.0)
+        au_p = st.number_input("Au Price ($/Oz)", value=4500.0)
     with c2:
         cu_a = st.number_input("Cu Assay (%)", value=25.0)
         ag_a = st.number_input("Ag Assay (g/DMT)", value=50.0)
-        au_a = st.number_input("Au Assay (g/DMT)", value=1.0)
+        au_a = st.number_input("Au Assay (g/DMT)", value=5.0)
 
 # --- 4. Main Inputs ---
 tabs = st.tabs(["A안(Base)", "B안", "C안"])
-cases = [("A (Base)안", "a", 80.0), ("B안", "b", 80.0), ("C안", "c", 80.0)]
+cases = [("A (Base)안", "a", 30.0), ("B안", "b", 30.0), ("C안", "c", 30.0)]
 data = {}
 
 for i, (name, k, def_tc) in enumerate(cases):
@@ -97,9 +97,9 @@ for i, (name, k, def_tc) in enumerate(cases):
         st.markdown(f"<div class='section-head'>📉 TC/RC</div>", unsafe_allow_html=True)
         c_tr1, c_tr2 = st.columns(2)
         data[f"tc_{k}"] = c_tr1.number_input("TC ($/DMT)", value=def_tc, key=f"tc_{k}")
-        data[f"cu_rc_{k}"] = c_tr1.number_input("Cu RC (c/lb)", value=0.0, key=f"curc_{k}")
-        data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.0, key=f"agrc_{k}")
-        data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=0.0, key=f"aurc_{k}")
+        data[f"cu_rc_{k}"] = c_tr1.number_input("Cu RC (c/lb)", value=8.0, key=f"curc_{k}")
+        data[f"ag_rc_{k}"] = c_tr2.number_input("Ag RC ($/oz)", value=0.4, key=f"agrc_{k}")
+        data[f"au_rc_{k}"] = c_tr2.number_input("Au RC ($/oz)", value=5.0, key=f"aurc_{k}")
 
 # --- 5. Calculation & Result Card ---
 res = {k: calc_unit_net(mode, data[f"tc_{k}"], cu_p, cu_a, data[f"cu_py_{k}"], data[f"cu_rc_{k}"], data[f"cu_dt_{k}"], data[f"cu_dv_{k}"],
@@ -129,7 +129,7 @@ with res_area:
         </div>
     """, unsafe_allow_html=True)
 
-st.info("💡 **로직 확인**: 현재 PD는 'Assay * Pay%' 결과값에서 직접 차감됩니다. 따라서 은(Ag) Pay가 100%일 때 PD 20g의 가치는 정확히 시장가 20g($19.29)과 일치하게 됩니다.")
+st.info("💡 불순물 등 반영 없이, 동/은/금만 비교 하는 툴임")
 
 
 # --- 6. 협상 타겟 계산 (Break-even TC) ---
