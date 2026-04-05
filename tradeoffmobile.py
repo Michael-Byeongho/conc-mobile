@@ -143,17 +143,17 @@ with res_area:
 
         <div class="flex-container">
             <div class="flex-card">
-                <div class="card-title">🅰️ Base</div>
+                <div class="card-title">A안(원안)</div>
                 <div class="card-value">${abs(res['a']):,.0f}/t</div>
                 <div style='font-size: clamp(10px, 3vw, 13px); color: transparent;'>-</div>
             </div>
             <div class="flex-card">
-                <div class="card-title">🅱️ B안 델타</div>
+                <div class="card-title">B안</div>
                 <div class="card-value">${abs(res['b']):,.0f}/t</div>
                 {get_delta_html(d_b)}
             </div>
             <div class="flex-card">
-                <div class="card-title">🅲 C안 델타</div>
+                <div class="card-title">C안</div>
                 <div class="card-value">${abs(res['c']):,.0f}/t</div>
                 {get_delta_html(d_c)}
             </div>
