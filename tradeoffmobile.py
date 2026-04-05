@@ -137,37 +137,63 @@ with res_placeholder:
         </div>
     """, unsafe_allow_html=True)
 
-# --- 6. 협상 타겟 계산 (Target TC) ---
+# --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
-st.markdown("### 🎯 협상 목표 계산 (A vs B)")
+st.markdown("### 🎯 A안 대비 B안 비교 및 조정 목표 (Gap)")
 
-# B안의 조건하에서 TC가 0일 때의 순수 금속가치 (abs로 부호 고정)
-val_b_pure = abs(calc_unit_net(mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
-                               au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
-                               ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']))
+# 1. 두 안의 Net 결과값 차이
+net_diff = res['b'] - res['a']
 
-# A안의 최종 Net(절댓값)과 동일해지기 위한 B안의 TC
-# [매입] 금속가치(1000) - 목표지출(970) = 목표TC(30)
-be_tc = val_b_pure - abs(res['a'])
-diff_tc = be_tc - data['tc_b']
-is_favorable = diff_tc >= -0.0001
+# 2. Gap을 메꾸기 위한 TC 조정액 계산
+if "Purchase" in mode:
+    required_tc_adj = -net_diff
+else:
+    required_tc_adj = net_diff
 
-status_color = "#27ae60" if is_favorable else "#e74c3c"
-bg_color = "#f8fff9" if is_favorable else "#fff8f8"
+# 3. 상태 판별 (유리 / 동일 / 불리)
+if abs(net_diff) < 0.001:  # 동일한 경우
+    status_type = "equal"
+    status_color = "#95a5a6" # 회색
+    bg_color = "#f4f6f7"
+elif net_diff > 0:         # 유리한 경우
+    status_type = "favorable"
+    status_color = "#27ae60" # 녹색
+    bg_color = "#f8fff9"
+else:                      # 불리한 경우
+    status_type = "unfavorable"
+    status_color = "#e74c3c" # 붉은색
+    bg_color = "#fff8f8"
 
+# 4. 메시지 구성
+if status_type == "equal":
+    analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b>"
+    guide_text = "추가적인 TC 조정 없이도 A안과 같은 수익성을 유지합니다."
+elif status_type == "favorable":
+    analysis_text = f"✅ B안의 금속 조건이 유리합니다. (A안 대비 <b>+${abs(net_diff):,.2f}</b>)"
+    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("낮춰줄(인하)" if "Purchase" in mode else "높여줄(인상)") + " 여유가 있습니다."
+else:
+    analysis_text = f"❌ B안의 금속 조건이 불리합니다. (A안 대비 <b>-${abs(net_diff):,.2f}</b>)"
+    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("더 받아야(인상)" if "Purchase" in mode else "더 깎아야(인하)") + " 합니다."
+
+# 5. UI 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">🎯 목표 TC (Target TC)</p>
-        <p style="margin: 5px 0; color: #2c3e50; font-size: 28px; font-weight: 800;">${be_tc:,.2f}</p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 수준의 수익을 맞추기 위한 B안의 조정가능(필요)액</p>
+        <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
+            {'+' if required_tc_adj > 0.001 else ''}{required_tc_adj:,.2f} $/mt
+        </p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 분석 결과</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {f"✅ 현재 제안이 목표 대비 <b>${abs(diff_tc):,.2f}</b> 유리합니다." if is_favorable else 
-             f"❌ 현재 제안이 목표 대비 <b>${abs(diff_tc):,.2f}</b> 불리합니다."}
+            {analysis_text}<br>
+            <span style="font-size: 13px; color: #7f8c8d;">{guide_text}</span>
         </p>
     </div>
 """, unsafe_allow_html=True)
+
+
 # --- 7. 하단 이동 버튼 ---
 st.markdown("""
     <style>
