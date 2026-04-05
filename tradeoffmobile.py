@@ -113,39 +113,31 @@ for _, k, _ in cases:
         ag_p, ag_a, data[f"ag_py_{k}"], data[f"ag_rc_{k}"], data[f"ag_dt_{k}"], data[f"ag_dv_{k}"]
     )
 
-# --- 5. 결과 출력 (Sidebar & Placeholder) ---
+# --- 5. 결과 출력 수정 (Sidebar & Placeholder) ---
 with st.sidebar:
     st.markdown("---")
     st.subheader("📊 최종 계산 결과")
+    
+    # 기본 단가 표시
     st.metric("A (비교기준값)", f"${abs(res['a']):,.2f} /t")
-    st.metric("B안 (vs A)", f"${abs(res['b']):,.2f} /t", f"{res['b'] - res['a']:,.2f}")
-    st.metric("C안 (vs A)", f"${abs(res['c']):,.2f} /t", f"{res['c'] - res['a']:,.2f}")
+    
+    # B안 및 C안의 차액 계산
+    d_b = res['b'] - res['a']
+    d_c = res['c'] - res['a']
+    
+    # 매입/매출 모드에 따른 화살표 방향 및 색상 제어
+    # Purchase 모드일 때는 단가가 낮아지는 것(d_b < 0)이 이득(Green)입니다.
+    label_b = "B안 (vs A)"
+    st.metric(label_b, f"${abs(res['b']):,.2f} /t", f"{d_b:,.2f}")
+    
+    label_c = "C안 (vs A)"
+    st.metric(label_c, f"${abs(res['c']):,.2f} /t", f"{d_c:,.2f}")
 
-d_b = res['b'] - res['a']
-d_c = res['c'] - res['a']
+    # 상세 분석 (Ag 변화 확인용)
+    if abs(d_b) < 0.01 and data.get('ag_dv_b', 0) != data.get('ag_dv_a', 0):
+        st.warning("⚠️ Ag 공제량 변화가 전체 단가에 미치는 영향이 매우 미미합니다 ($0.01 미만).")
 
-with res_placeholder:
-    st.markdown(f"""
-        <div style="margin-top: 10px; margin-bottom: 20px;">
-            <p style="font-weight: bold; margin-bottom: 5px;">📊 분석 결과 요약</p>
-            <div style="display: flex; justify-content: space-between; gap: 10px;">
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">A안 (Base)</div>
-                    <div style="font-size:20px; font-weight:bold;">${abs(res['a']):,.2f}</div>
-                </div>
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">B안</div>
-                    <div style="font-size:20px; font-weight:bold;">${abs(res['b']):,.2f}</div>
-                    <div style="font-size:14px; font-weight:bold; color:{'green' if d_b > 0 else 'red'}">{'▲' if d_b > 0 else '▼'} {abs(d_b):,.2f}</div>
-                </div>
-                <div style="flex:1; background:#f8f9fa; padding:15px; border-radius:8px; border-top:5px solid #2e4053; text-align:center;">
-                    <div style="font-size:12px; color:#7f8c8d;">C안</div>
-                    <div style="font-size:20px; font-weight:bold;">${abs(res['c']):,.2f}</div>
-                    <div style="font-size:14px; font-weight:bold; color:{'green' if d_c > 0 else 'red'}">{'▲' if d_c > 0 else '▼'} {abs(d_c):,.2f}</div>
-                </div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
