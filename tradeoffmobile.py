@@ -11,6 +11,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+st.markdown("<div id='top'></div>", unsafe_allow_html=True)
+
 # --- 1. Core Logic (부호 체계 정립: 가치(+), 비용(-)) ---
 def calc_unit_net(mode, tc, cu_p, cu_a, cu_py, cu_rc, cu_dt, cu_dv, 
                   au_p, au_a, au_py, au_rc, au_dt, au_dv, 
