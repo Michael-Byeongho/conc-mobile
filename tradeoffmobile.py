@@ -141,26 +141,28 @@ st.info("💡 불순물 및 기타 변수 제외, 금속 가격 및 payable, TRC
 st.markdown("---")
 st.markdown("### 🎯 협상 목표 계산 (A vs B)")
 
-# 1. B안의 순수 금속 가치 (TC 차감 전)
-# calc_unit_net 내부 부호 영향을 없애기 위해 abs() 사용
-val_b_raw = abs(calc_unit_net(
+# 1. B안의 조건(Pay%, RC 등)은 유지하되 TC만 0일 때의 순수 금속 가치 ($)
+# calc_unit_net이 매입 시 음수를 반환하므로 abs()로 순수 가치만 추출
+val_b_pure_metal = abs(calc_unit_net(
     mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
     au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
     ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']
 ))
 
-# 2. A안의 최종 Net 가치 (절댓값)
-val_a_net = abs(res['a'])
+# 2. A안의 최종 결과값 (Net $) - 우리가 도달해야 할 목표 지점
+# 역시 abs()를 통해 '정산되는 금액' 그 자체를 기준으로 잡음
+target_net_from_a = abs(res['a'])
 
-# 3. Target TC 산출 
-# A안과 같은 결과(Net)를 내기 위해 B안에서 허용 가능한 TC
-# 로직: (B안 순수 금속 가치) - (A안 최종 Net)
-be_tc = val_b_raw - val_a_net
+# 3. Target TC 계산
+# [매입] 모드: (B안 금속 가치) - (내가 지불할 목표 금액) = 내가 깎아야 할 TC
+# [매출] 모드: (B안 금속 가치) - (내가 받을 목표 금액) = 상대가 깎을 TC
+# 결론적으로 두 모드 모두 수식은 동일함: be_tc = val_b_pure_metal - target_net_from_a
+be_tc = val_b_pure_metal - target_net_from_a
 
-# 4. 유불리 판정
-# 제안된 B안의 TC(data['tc_b'])가 계산된 목표 TC(be_tc)보다 낮을수록 나에게 유리
+# 4. 유불리 분석
+# 실제 B안에 입력된 TC(data['tc_b'])가 우리가 계산한 목표 TC(be_tc)보다 낮아야 유리함
 diff_tc = be_tc - data['tc_b']
-is_favorable = diff_tc >= -0.001 # 오차 범위 허용
+is_favorable = diff_tc >= -0.0001
 
 status_color = "#27ae60" if is_favorable else "#e74c3c"
 bg_color = "#f8fff9" if is_favorable else "#fff8f8"
@@ -174,12 +176,11 @@ st.markdown(f"""
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
         <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 B안 제안 분석</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {f"✅ 현재 제안이 목표 대비 <b>${abs(diff_tc):,.2f}</b> 우수합니다." if is_favorable else 
-             f"❌ 현재 제안이 목표 대비 <b>${abs(diff_tc):,.2f}</b> 불리합니다."}
+            {f"✅ 현재 제안된 TC가 목표보다 <b>${abs(diff_tc):,.2f}</b> 낮아 유리합니다." if is_favorable else 
+             f"❌ 현재 제안된 TC가 목표보다 <b>${abs(diff_tc):,.2f}</b> 높아 불리합니다."}
         </p>
     </div>
 """, unsafe_allow_html=True)
-
 
 
 # --- 7. 하단 이동 버튼 ---
