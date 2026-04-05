@@ -176,9 +176,9 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- 7. 최상단 이동 버튼 (앵커 방식) ---
+# --- 7. 최상단 이동 버튼 (앵커 방식 - 색상 강제 고정) ---
 st.markdown("""
-    <a href="#link_to_top" style="text-decoration: none;">
+    <a href="#link_to_top" style="text-decoration: none !important; color: white !important;">
         <div style="
             width: 100%; 
             padding: 15px; 
@@ -190,8 +190,19 @@ st.markdown("""
             margin-top: 30px; 
             margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            color: white !important;
         ">
             <span style="color: white !important;">⬆️ 최상단으로 돌아가기</span>
         </div>
     </a>
+    <style>
+        /* 링크 상태에 따른 모든 색상을 흰색으로 강제 고정 */
+        a[href="#link_to_top"]:link, 
+        a[href="#link_to_top"]:visited, 
+        a[href="#link_to_top"]:hover, 
+        a[href="#link_to_top"]:active {
+            color: white !important;
+            text-decoration: none !important;
+        }
+    </style>
     """, unsafe_allow_html=True)
