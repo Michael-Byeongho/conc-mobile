@@ -105,39 +105,39 @@ for _, k, _ in cases:
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
-st.markdown("### 🎯 A안 대비 B안의 조건 차이 (TC 환산)")
+st.markdown("### 🎯 A안 대비 B안의 TC 조정 목표 (Gap)")
 
-# 1. B안에서 TC만 0으로 만들었을 때의 Net value를 구합니다. (순수 금속 조건 가치)
-net_b_zero_tc = calc_unit_net(
-    mode, 0.0, cu_p, cu_a, data['cu_py_b'], data['cu_rc_b'], data['cu_dt_b'], data['cu_dv_b'],
-    au_p, au_a, data['au_py_b'], data['au_rc_b'], data['au_dt_b'], data['au_dv_b'],
-    ag_p, ag_a, data['ag_py_b'], data['ag_rc_b'], data['ag_dt_b'], data['ag_dv_b']
-)
+# 1. 두 안의 Net 결과값 차이 (이미 TC가 포함된 최종 금액의 차이)
+# res['b'] - res['a'] 가 양수(+)라면 B안이 A안보다 유리한 상태입니다.
+net_diff = res['b'] - res['a']
 
-# 2. A안의 최종 결과(TC가 포함된 기준점)와 비교합니다.
-# A안과 B안의 조건이 똑같다면, (net_b_zero_tc - 30) - net_a = 0 이 됩니다.
-# 여기서 구하고 싶은 것은 "B안의 조건이 A안보다 TC 기준 몇 불 이득인가?" 입니다.
-tc_benefit = net_b_zero_tc - res['a']
+# 2. 이 Gap을 메꾸기 위해 B안의 TC를 얼마나 '더' 조정해야 하는가?
+# 매입(Purchase): net = TC - Metal 이므로, B가 유리(net_diff > 0)하면 TC를 그만큼 '낮춰야' A와 같아짐
+# 매출(Sales): net = Metal - TC 이므로, B가 유리(net_diff > 0)하면 TC를 그만큼 '높여야' A와 같아짐
+if "Purchase" in mode:
+    required_tc_adj = -net_diff
+else:
+    required_tc_adj = net_diff
 
-# 3. 유불리 분석 (Gap 기준)
-# tc_benefit이 0보다 크면 B안의 금속 조건이 A안보다 그만큼 유리하다는 뜻입니다.
-is_favorable = tc_benefit >= -0.0001
+# 3. 유불리 판단
+is_favorable = net_diff >= -0.0001
 status_color = "#27ae60" if is_favorable else "#e74c3c"
 bg_color = "#f8fff9" if is_favorable else "#fff8f8"
 
+# 4. 결과 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 대비 B안의 조건 유리도 (TC 환산)</p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 수준의 수익을 맞추기 위한 B안의 TC 조정액</p>
         <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
-            {'+' if tc_benefit > 0 else ''}{tc_benefit:,.2f} $/mt
+            {'+' if required_tc_adj > 0 else ''}{required_tc_adj:,.2f} $/mt
         </p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 분석 결과</p>
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 협상 가이드</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
-            {"✅ B안의 금속 정산 조건이 A안보다 유리하여, TC를 <b>$" + f"{abs(tc_benefit):,.2f}" + "</b> 더 많이 받아낼 수 있는 여유가 있습니다." if is_favorable else 
-             "❌ B안의 금속 정산 조건이 A안보다 불리하여, A안과 맞추려면 TC를 <b>$" + f"{abs(tc_benefit):,.2f}" + "</b> 더 깎아야 합니다."}
+            {"✅ B안의 금속 조건이 유리합니다. A안과 동일한 수익을 보려면 TC를 <b>$" + f"{abs(required_tc_adj):,.2f}" + "</b> 만큼 " + ("낮춰줄(인하)" if "Purchase" in mode else "높여줄(인상)") + " 여유가 있습니다." if is_favorable else 
+             "❌ B안의 금속 조건이 불리합니다. A안과 동일한 수익을 보려면 TC를 <b>$" + f"{abs(required_tc_adj):,.2f}" + "</b> 만큼 " + ("더 받아야(인상)" if "Purchase" in mode else "더 깎아야(인하)") + " 합니다."}
         </p>
     </div>
 """, unsafe_allow_html=True)
