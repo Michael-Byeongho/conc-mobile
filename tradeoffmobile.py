@@ -106,9 +106,9 @@ d_c = res['c'] - res['a']
 with res_placeholder:
     st.markdown(f"""
         <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-            <div class="metric-card">A안 (Base)<br><b>${abs(res['a']):,.2f}</b></div>
-            <div class="metric-card">B안<br><b>${abs(res['b']):,.2f}</b><br><span style="color:{'#27ae60' if d_b > 0 else '#e74c3c'}">{'▲' if d_b > 0 else '▼'} {abs(d_b):,.2f}</span></div>
-            <div class="metric-card">C안<br><b>${abs(res['c']):,.2f}</b><br><span style="color:{'#27ae60' if d_c > 0 else '#e74c3c'}">{'▲' if d_c > 0 else '▼'} {abs(d_c):,.2f}</span></div>
+            <div class="metric-card">Case A (Base)<br><b>${abs(res['a']):,.2f}</b></div>
+            <div class="metric-card">Case B<br><b>${abs(res['b']):,.2f}</b><br><span style="color:{'#27ae60' if d_b > 0 else '#e74c3c'}">{'▲' if d_b > 0 else '▼'} {abs(d_b):,.2f}</span></div>
+            <div class="metric-card">Case C<br><b>${abs(res['c']):,.2f}</b><br><span style="color:{'#27ae60' if d_c > 0 else '#e74c3c'}">{'▲' if d_c > 0 else '▼'} {abs(d_c):,.2f}</span></div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -141,26 +141,26 @@ else:                      # 불리한 경우
 
 # 4. 메시지 구성
 if status_type == "equal":
-    analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b>"
-    guide_text = "추가적인 TC 조정 없이도 A안과 같은 수익성을 유지합니다."
+    analysis_text = "✅ Case B's metal conditions are <b>identical to Case A.</b>"
+    guide_text = "Maintains the same profitability as Option A without further adjustments."
 elif status_type == "favorable":
-    analysis_text = f"✅ B안의 금속 조건이 유리합니다. (A안 대비 <b>+${abs(net_diff):,.2f}</b>)"
-    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("낮춰줄(인하)" if "Purchase" in mode else "높여줄(인상)") + " 여유가 있습니다."
+    analysis_text = f"✅ Case B has favorable metal conditions. (<b>+${abs(net_diff):,.2f}</b> vs Option A)"
+    guide_text = f"To match Case A's profit, you have a margin to " + ("decrease" if "Purchase" in mode else "increase") + f" $/MT by <b>${abs(required_tc_adj):,.2f}</b>/mt."
 else:
-    analysis_text = f"❌ B안의 금속 조건이 불리합니다. (A안 대비 <b>-${abs(net_diff):,.2f}</b>)"
-    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + ("더 받아야(인상)" if "Purchase" in mode else "더 깎아야(인하)") + " 합니다."
+    analysis_text = f"❌ Option B has unfavorable metal conditions. (<b>-${abs(net_diff):,.2f}</b> vs Option A)"
+    guide_text = f"To match Option A's profit, you need to " + ("increase" if "Purchase" in mode else "decrease") + f" $/MT by <b>${abs(required_tc_adj):,.2f}</b>/mt."
 
 # 5. UI 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ A안 수준의 수익을 맞추기 위한 B안의 조정가능(필요)액</p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ Required $/MT Adjustment for Case B to Match Case A Profit</p>
         <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
             {'+' if required_tc_adj > 0.001 else ''}{required_tc_adj:,.2f} $/mt
         </p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 분석 결과</p>
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 Analysis Results</p>
         <p style="margin: 0; color: #34495e; font-size: 14px;">
             {analysis_text}<br>
             <span style="font-size: 13px; color: #7f8c8d;">{guide_text}</span>
@@ -187,6 +187,6 @@ st.markdown("""
         .top-link:hover { background-color: #3e5871; }
     </style>
     <a href="#link_to_top" target="_self" class="top-link">
-        ⬆️ 최상단으로 돌아가기
+        ⬆️ Going up
     </a>
 """, unsafe_allow_html=True)
