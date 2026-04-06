@@ -68,8 +68,8 @@ for i, name in enumerate(["a", "b", "c"]):
         col_cu, col_ag, col_au, col_tc = st.columns(4)
         
         with col_tc:
-            tc = st.number_input(f"TC ($/DMT)", value=80.0, key=f"tc_{name}")
-            cu_rc = st.number_input(f"Cu RC (c/lb)", value=8.0, key=f"curc_{name}")
+            tc = st.number_input(f"TC ($/DMT)", value=10.0, key=f"tc_{name}")
+            cu_rc = st.number_input(f"Cu RC (c/lb)", value=1.0, key=f"curc_{name}")
             ag_rc = st.number_input(f"Ag RC ($/oz)", value=0.5, key=f"agrc_{name}")
             au_rc = st.number_input(f"Au RC ($/oz)", value=5.0, key=f"aurc_{name}")
         
@@ -77,19 +77,19 @@ for i, name in enumerate(["a", "b", "c"]):
             st.caption("Copper")
             cu_py = st.number_input("Pay (%)", value=100.0, key=f"cupy_{name}")
             cu_dt = st.radio("Deduct", ["PD", "MD"], key=f"cudt_{name}")
-            cu_dv = st.number_input("Val", value=1.0, key=f"cudv_{name}")
+            cu_dv = st.number_input("Unit(%)", value=1.0, key=f"cudv_{name}")
         
         with col_ag:
             st.caption("Silver")
             ag_py = st.number_input("Pay (%)", value=90.0, key=f"agpy_{name}")
             ag_dt = st.radio("Deduct", ["PD", "MD"], key=f"agdt_{name}")
-            ag_dv = st.number_input("Val", value=30.0, key=f"agdv_{name}")
+            ag_dv = st.number_input("G/MT", value=30.0, key=f"agdv_{name}")
 
         with col_au:
             st.caption("Gold")
             au_py = st.number_input("Pay (%)", value=90.0, key=f"aupy_{name}")
             au_dt = st.radio("Deduct", ["PD", "MD"], key=f"audt_{name}")
-            au_dv = st.number_input("Val", value=1.0, key=f"audv_{name}")
+            au_dv = st.number_input("G/MT", value=1.0, key=f"audv_{name}")
 
 
 
