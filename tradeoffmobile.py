@@ -143,14 +143,13 @@ if status_type == "equal":
     analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b><br>(Case B's conditions are <b>identical to Case A.</b>)"
     guide_text = "추가적인 조정 없이도 A안과 같은 수익성을 유지합니다. (Maintains same profitability without $/MT adjustments.)"
 elif status_type == "favorable":
-    analysis_text = f"✅ B안의 조건이 유리합니다. (Case B is favorable: <b>➕${abs(net_diff):,.2f}</b> vs A)"
+    analysis_text = f"✅ B안의 조건이 유리합니다. (Case B is favorable: <b>+${abs(net_diff):,.2f}</b> vs A)"
     guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
-                 ("낮춰줄(Decrease)" if "Purchase" in mode else "높여줄(Increase)") + " 여유가 있습니다. (Margin to adjust  <b>${abs(required_tc_adj):,.2f}</b> to match Case A.)"
+                 ("낮춰줄(Decrease)" if "Purchase" in mode else "높여줄(Increase)") + \f" 여유가 있습니다. (<b>${abs(required_tc_adj):,.2f}</b> margin available to match Case A's profit.)"
 else:
-    analysis_text = f"❌ B안의 조건이 불리합니다. (Case B is unfavorable: <b>➖${abs(net_diff):,.2f}</b> vs A)"
+    analysis_text = f"❌ B안의 조건이 불리합니다. (Case B is unfavorable: <b>△${abs(net_diff):,.2f}</b> vs A)"
     guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
-                 ("더 받아야(Increase)" if "Purchase" in mode else "더 깎아야(Decrease)") + " 합니다. (Adjustment  <b>${abs(required_tc_adj):,.2f}</b> required to match Case A's profit.)"
-
+                 ("더 받아야(Increase)" if "Purchase" in mode else "더 깎아야(Decrease)") +  \f" 합니다. (<b>${abs(required_tc_adj):,.2f}</b> adjustment needed to match Case A's profit.)"
 # 5. UI 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
