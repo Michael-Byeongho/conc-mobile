@@ -70,8 +70,8 @@ for i, name in enumerate(["a", "b", "c"]):
         with col_tc:
             tc = st.number_input(f"TC ($/DMT)", value=80.0, key=f"tc_{name}")
             cu_rc = st.number_input(f"Cu RC (c/lb)", value=8.0, key=f"curc_{name}")
-            au_rc = st.number_input(f"Au RC ($/oz)", value=5.0, key=f"aurc_{name}")
             ag_rc = st.number_input(f"Ag RC ($/oz)", value=0.5, key=f"agrc_{name}")
+            au_rc = st.number_input(f"Au RC ($/oz)", value=5.0, key=f"aurc_{name}")
         
         with col_cu:
             st.caption("Copper")
