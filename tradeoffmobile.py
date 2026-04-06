@@ -143,13 +143,13 @@ if status_type == "equal":
     analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b><br>(Case B's conditions are <b>identical to Case A.</b>)"
     guide_text = "추가적인 조정 없이도 A안과 같은 수익성을 유지합니다. (Maintains same profitability without $/MT adjustments.)"
 elif status_type == "favorable":
-    analysis_text = f"✅ B안의 조건이 유리합니다. (Case B is favorable: <b>➕${abs(net_diff):,.2f}</b> vs A)"
+    analysis_text = f"✅ B안의 조건이 유리합니다. (Case B is favorable: <b>+${abs(net_diff):,.2f}</b> vs A)"
     # Margin(여유폭)이라는 단어를 써서 깎아줄 수 있는 금액임을 명시
     guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
                  ("낮춰줄(Decrease)" if "Purchase" in mode else "높여줄(Increase)") + \
                  f" 여유가 있습니다. (<b>${abs(required_tc_adj):,.2f}</b> margin available to match Case A's profit.)"
 else:
-    analysis_text = f"❌ B안의 조건이 불리합니다. (Case B is unfavorable: <b>➖${abs(net_diff):,.2f}</b> vs A)"
+    analysis_text = f"❌ B안의 조건이 불리합니다. (Case B is unfavorable: <b>-${abs(net_diff):,.2f}</b> vs A)"
     # Adjustment(조정치)가 어느 방향으로 발생해야 하는지 명시
     guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
                  ("더 받아야(Increase)" if "Purchase" in mode else "더 깎아야(Decrease)") + \
