@@ -139,29 +139,33 @@ else:                      # 불리한 경우
     status_color = "#e74c3c" # 붉은색
     bg_color = "#fff8f8"
 
-# 4. 메시지 구성
 if status_type == "equal":
-    analysis_text = "✅ Case B's metal conditions are <b>identical to Case A.</b>"
-    guide_text = "Maintains the same profitability as Option A without further adjustments."
+    analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b><br>(Option B's conditions are <b>identical to Option A.</b>)"
+    guide_text = "추가적인 TC 조정 없이도 A안과 같은 수익성을 유지합니다. (Maintains same profitability without TC adjustments.)"
 elif status_type == "favorable":
-    analysis_text = f"✅ Case B has favorable metal conditions. (<b>+${abs(net_diff):,.2f}</b> vs Option A)"
-    guide_text = f"To match Case A's profit, you have a margin to " + ("decrease" if "Purchase" in mode else "increase") + f" $/MT by <b>${abs(required_tc_adj):,.2f}</b>/mt."
+    analysis_text = f"✅ B안의 금속 조건이 유리합니다. (Option B is favorable: <b>+${abs(net_diff):,.2f}</b> vs A)"
+    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
+                 ("낮춰줄(Decrease)" if "Purchase" in mode else "높여줄(Increase)") + " 여유가 있습니다. (Margin to adjust TC to match Option A.)"
 else:
-    analysis_text = f"❌ Option B has unfavorable metal conditions. (<b>-${abs(net_diff):,.2f}</b> vs Option A)"
-    guide_text = f"To match Option A's profit, you need to " + ("increase" if "Purchase" in mode else "decrease") + f" $/MT by <b>${abs(required_tc_adj):,.2f}</b>/mt."
+    analysis_text = f"❌ B안의 금속 조건이 불리합니다. (Option B is unfavorable: <b>-${abs(net_diff):,.2f}</b> vs A)"
+    guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
+                 ("더 받아야(Increase)" if "Purchase" in mode else "더 깎아야(Decrease)") + " 합니다. (Adjustment required to match Option A's profit.)"
 
 # 5. UI 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">⚖️ Required $/MT Adjustment for Case B to Match Case A Profit</p>
+        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">
+            ⚖️ A안 수준의 수익을 맞추기 위한 B안의 조정 필요액<br>
+            <span style="font-size: 12px;">(Required TC Adj. for Option B to Match Option A Profit)</span>
+        </p>
         <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
             {'+' if required_tc_adj > 0.001 else ''}{required_tc_adj:,.2f} $/mt
         </p>
         <div style="height: 4px; background-color: {status_color}; width: 100%; border-radius: 2px;"></div>
     </div>
     <div style="background-color: {bg_color}; padding: 15px; border-radius: 10px; border-left: 5px solid {status_color};">
-        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 Analysis Results</p>
-        <p style="margin: 0; color: #34495e; font-size: 14px;">
+        <p style="margin: 0 0 5px 0; color: #2c3e50; font-size: 14px; font-weight: bold;">📊 분석 결과 (Analysis Results)</p>
+        <p style="margin: 0; color: #34495e; font-size: 14px; line-height: 1.6;">
             {analysis_text}<br>
             <span style="font-size: 13px; color: #7f8c8d;">{guide_text}</span>
         </p>
