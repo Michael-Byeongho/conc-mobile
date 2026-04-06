@@ -42,12 +42,12 @@ def calculate_net_value(mode, tc, market, terms):
     return -net_value if "Purchase" in mode else net_value
 
 # --- 2. UI 레이아웃 ---
-st.title("⚡ 동정광 Trade-off 분석기")
-mode = st.radio("🔄 거래 포지션 선택", ["Purchase (매입)", "Sales (매출)"], horizontal=True)
+st.title("⚡ Copper conc Trade-off Calculator")
+mode = st.radio("🔄 Position Choose", ["Purchase", "Sales"], horizontal=True)
 res_placeholder = st.empty()
 
 # --- 3. 공통 입력 ---
-with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
+with st.expander("⚙️ Market price and Assays", expanded=True):
     c1, c2, c3 = st.columns(3)
     market = {
         "cu_p": c1.number_input("Cu Price ($/MT)", value=12000.0),
@@ -59,12 +59,12 @@ with st.expander("⚙️ 시장 가격 및 품위 (공통)", expanded=True):
     }
 
 # --- 4. 시나리오별 입력 ---
-tabs = st.tabs(["A안 (Base)", "B안", "C안"])
+tabs = st.tabs(["Case A (Base)", "Case B", "Case C"])
 res = {} # 결과 저장 딕셔너리 명칭을 res로 통일
 
 for i, name in enumerate(["a", "b", "c"]):
     with tabs[i]:
-        st.markdown(f"<div class='section-head'>{name.upper()}안 조건 설정</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='section-head'>Case {name.upper()} Terms</div>", unsafe_allow_html=True)
         col_cu, col_ag, col_au, col_tc = st.columns(4)
         
         with col_tc:
@@ -114,7 +114,7 @@ with res_placeholder:
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
-st.markdown("### 🎯 A안 대비 B안 비교 및 조정 목표 (Gap)")
+st.markdown("### 🎯 Comparing Case A wigh B and Adjustable Target number (Gap)")
 
 # 1. 두 안의 Net 결과값 차이
 net_diff = res['b'] - res['a']
