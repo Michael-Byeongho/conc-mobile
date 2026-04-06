@@ -114,7 +114,7 @@ with res_placeholder:
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
-st.markdown("### 🎯 Comparing Case A wigh B and Adjustable Target number (Gap)")
+st.markdown("### 🎯 Comparing Case A with B and Adjustable Target number (Gap)")
 
 # 1. 두 안의 Net 결과값 차이
 net_diff = res['b'] - res['a']
@@ -140,23 +140,23 @@ else:                      # 불리한 경우
     bg_color = "#fff8f8"
 
 if status_type == "equal":
-    analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b><br>(Option B's conditions are <b>identical to Option A.</b>)"
-    guide_text = "추가적인 TC 조정 없이도 A안과 같은 수익성을 유지합니다. (Maintains same profitability without TC adjustments.)"
+    analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b><br>(Case B's conditions are <b>identical to Case A.</b>)"
+    guide_text = "추가적인 조정 없이도 A안과 같은 수익성을 유지합니다. (Maintains same profitability without $/MT adjustments.)"
 elif status_type == "favorable":
-    analysis_text = f"✅ B안의 금속 조건이 유리합니다. (Option B is favorable: <b>+${abs(net_diff):,.2f}</b> vs A)"
+    analysis_text = f"✅ B안의 조건이 유리합니다. (Case B is favorable: <b>+${abs(net_diff):,.2f}</b> vs A)"
     guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
-                 ("낮춰줄(Decrease)" if "Purchase" in mode else "높여줄(Increase)") + " 여유가 있습니다. (Margin to adjust TC to match Option A.)"
+                 ("낮춰줄(Decrease)" if "Purchase" in mode else "높여줄(Increase)") + " 여유가 있습니다. (Margin to adjust $/MT to match Case A.)"
 else:
-    analysis_text = f"❌ B안의 금속 조건이 불리합니다. (Option B is unfavorable: <b>-${abs(net_diff):,.2f}</b> vs A)"
+    analysis_text = f"❌ B안의 조건이 불리합니다. (Case B is unfavorable: <b>-${abs(net_diff):,.2f}</b> vs A)"
     guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
-                 ("더 받아야(Increase)" if "Purchase" in mode else "더 깎아야(Decrease)") + " 합니다. (Adjustment required to match Option A's profit.)"
+                 ("더 받아야(Increase)" if "Purchase" in mode else "더 깎아야(Decrease)") + " 합니다. (Adjustment required to match Case A's profit.)"
 
 # 5. UI 출력
 st.markdown(f"""
     <div style="background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0; text-align: center; margin-bottom: 15px;">
         <p style="margin: 0; color: #7f8c8d; font-size: 14px;">
             ⚖️ A안 수준의 수익을 맞추기 위한 B안의 조정 필요액<br>
-            <span style="font-size: 12px;">(Required TC Adj. for Option B to Match Option A Profit)</span>
+            <span style="font-size: 12px;">(Required $/MT Adj. for Case B to Match Case A Profit)</span>
         </p>
         <p style="margin: 5px 0; color: {status_color}; font-size: 28px; font-weight: 800;">
             {'+' if required_tc_adj > 0.001 else ''}{required_tc_adj:,.2f} $/mt
