@@ -114,7 +114,7 @@ with res_placeholder:
 
 # --- 6. 협상 타겟 계산 (TC Gap 분석) ---
 st.markdown("---")
-st.markdown("### 🎯 Comparing Case A with B and Adjustable Target number (Gap)")
+st.markdown("### 🎯 A안 대비 B안 비교 및 조정가능값 계산(Comparing Case A with B and Adjustable Target number/GAP)")
 
 # 1. 두 안의 Net 결과값 차이
 net_diff = res['b'] - res['a']
@@ -143,13 +143,13 @@ if status_type == "equal":
     analysis_text = "✅ 현재 B안의 조건이 <b>A안과 완전히 동일합니다.</b><br>(Case B's conditions are <b>identical to Case A.</b>)"
     guide_text = "추가적인 조정 없이도 A안과 같은 수익성을 유지합니다. (Maintains same profitability without $/MT adjustments.)"
 elif status_type == "favorable":
-    analysis_text = f"✅ B안의 조건이 유리합니다. (Case B is favorable: <b>+${abs(net_diff):,.2f}</b> vs A)"
+    analysis_text = f"✅ B안의 조건이 유리합니다. (Case B is favorable: <b>➕${abs(net_diff):,.2f}</b> vs A)"
     guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
-                 ("낮춰줄(Decrease)" if "Purchase" in mode else "높여줄(Increase)") + " 여유가 있습니다. (Margin to adjust $/MT to match Case A.)"
+                 ("낮춰줄(Decrease)" if "Purchase" in mode else "높여줄(Increase)") + " 여유가 있습니다. (Margin to adjust  <b>${abs(required_tc_adj):,.2f}</b> to match Case A.)"
 else:
-    analysis_text = f"❌ B안의 조건이 불리합니다. (Case B is unfavorable: <b>-${abs(net_diff):,.2f}</b> vs A)"
+    analysis_text = f"❌ B안의 조건이 불리합니다. (Case B is unfavorable: <b>➖${abs(net_diff):,.2f}</b> vs A)"
     guide_text = f"A안과 수익을 맞추려면 톤당 <b>${abs(required_tc_adj):,.2f}</b> 만큼 " + \
-                 ("더 받아야(Increase)" if "Purchase" in mode else "더 깎아야(Decrease)") + " 합니다. (Adjustment required to match Case A's profit.)"
+                 ("더 받아야(Increase)" if "Purchase" in mode else "더 깎아야(Decrease)") + " 합니다. (Adjustment  <b>${abs(required_tc_adj):,.2f}</b> required to match Case A's profit.)"
 
 # 5. UI 출력
 st.markdown(f"""
